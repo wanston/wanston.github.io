@@ -1,0 +1,850 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="最近在学iOS系统的RunLoop的知识，官方文档写的比较详细，但是一些细节并没有涉及到，而且网上其他的关于RunLoop的文章鱼龙混杂、良莠不齐，在这里，我推荐一下这一篇博客《深入理解RunLoop》。这篇博客对于RunLoop的源码进行了一定的分析，讲得很详细。在这里，自己把学习过程中遇到的一些值得注意的地方，还有一些官方文档没有提到的知识点梳理一下。
+RunLoop基本知识RunLoop S">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RunLoop">
+<meta property="og:url" content="http://yoursite.com/2017/07/19/RunLoop/index.html">
+<meta property="og:site_name" content="Wanston's Blog">
+<meta property="og:description" content="最近在学iOS系统的RunLoop的知识，官方文档写的比较详细，但是一些细节并没有涉及到，而且网上其他的关于RunLoop的文章鱼龙混杂、良莠不齐，在这里，我推荐一下这一篇博客《深入理解RunLoop》。这篇博客对于RunLoop的源码进行了一定的分析，讲得很详细。在这里，自己把学习过程中遇到的一些值得注意的地方，还有一些官方文档没有提到的知识点梳理一下。
+RunLoop基本知识RunLoop S">
+<meta property="og:updated_time" content="2017-07-20T08:09:15.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="RunLoop">
+<meta name="twitter:description" content="最近在学iOS系统的RunLoop的知识，官方文档写的比较详细，但是一些细节并没有涉及到，而且网上其他的关于RunLoop的文章鱼龙混杂、良莠不齐，在这里，我推荐一下这一篇博客《深入理解RunLoop》。这篇博客对于RunLoop的源码进行了一定的分析，讲得很详细。在这里，自己把学习过程中遇到的一些值得注意的地方，还有一些官方文档没有提到的知识点梳理一下。
+RunLoop基本知识RunLoop S">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/07/19/RunLoop/"/>
+
+
+
+
+
+  <title> RunLoop | Wanston's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Wanston's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <p class="site-subtitle">This blog is for wanston in HUST.</p>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/07/19/RunLoop/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="wanston">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Wanston's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Wanston's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                RunLoop
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-19T10:41:31+08:00">
+                2017-07-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/07/19/RunLoop/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/07/19/RunLoop/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近在学iOS系统的RunLoop的知识，官方文档写的比较详细，但是一些细节并没有涉及到，而且网上其他的关于RunLoop的文章鱼龙混杂、良莠不齐，在这里，我推荐一下这一篇博客<a href="http://blog.ibireme.com/2015/05/18/runloop/" target="_blank" rel="external">《深入理解RunLoop》</a>。这篇博客对于<a href="http://opensource.apple.com/tarballs/CF/" target="_blank" rel="external">RunLoop的源码</a>进行了一定的分析，讲得很详细。在这里，自己把学习过程中遇到的一些值得注意的地方，还有一些官方文档没有提到的知识点梳理一下。</p>
+<h1 id="RunLoop基本知识"><a href="#RunLoop基本知识" class="headerlink" title="RunLoop基本知识"></a>RunLoop基本知识</h1><h2 id="RunLoop-Sources"><a href="#RunLoop-Sources" class="headerlink" title="RunLoop Sources"></a>RunLoop Sources</h2><p>官方文档介绍，RunLoop的接收两种源的事件，输入源（Input Source）和定时器源（Timer Sources）。</p>
+<p>输入源分为三种：</p>
+<ul>
+<li>基于端口的输入源 （Port-Based Sources）</li>
+<li>自定义输入源 （Custom Input Sources）</li>
+<li>Cocoa提供的PerformSelector输入源 （Cocoa Perform Selector Sources）</li>
+</ul>
+<h2 id="RunLoop-观察者"><a href="#RunLoop-观察者" class="headerlink" title="RunLoop 观察者"></a>RunLoop 观察者</h2><p>用户可以在一次RunLoop循环中添加观察者（Run Loop Observers），观察RunLoop中的几个固定的事件。当这些事件到来时，会触发观察者的回调。</p>
+<p>官方文档表述的可观察的事件包括：</p>
+<blockquote>
+<ul>
+<li>The entrance to the run loop.</li>
+<li>When the run loop is about to process a timer.</li>
+<li>When the run loop is about to process an input source.</li>
+<li>When the run loop is about to go to sleep.</li>
+<li>When the run loop has woken up, but before it has processed the event that woke it up.</li>
+<li>The exit from the run loop.</li>
+</ul>
+</blockquote>
+<h2 id="RunLoop-流程"><a href="#RunLoop-流程" class="headerlink" title="RunLoop 流程"></a>RunLoop 流程</h2><p>官方文档表述的RunLoop处理事件的流程如下：</p>
+<blockquote>
+<ol>
+<li>Notify observers that the run loop has been entered.</li>
+<li>Notify observers that any ready timers are about to fire.</li>
+<li>Notify observers that any input sources that are not port based are about to fire.</li>
+<li>Fire any non-port-based input sources that are ready to fire.</li>
+<li>If a port-based input source is ready and waiting to fire, process the event immediately. Go to step 9.</li>
+<li>Notify observers that the thread is about to sleep.</li>
+<li>Put the thread to sleep until one of the following events occurs:<ul>
+<li>An event arrives for a port-based input source.</li>
+<li>A timer fires.</li>
+<li>The timeout value set for the run loop expires.</li>
+<li>The run loop is explicitly woken up.</li>
+</ul>
+</li>
+<li>Notify observers that the thread just woke up.</li>
+<li>Process the pending event.<ul>
+<li>If a user-defined timer fired, process the timer event and restart the loop. Go to step 2.</li>
+<li>If an input source fired, deliver the event.</li>
+<li>If the run loop was explicitly woken up but has not yet timed out, restart the loop. Go to step 2.</li>
+</ul>
+</li>
+<li>Notify observers that the run loop has exited.</li>
+</ol>
+</blockquote>
+<h1 id="RunLoop-实验"><a href="#RunLoop-实验" class="headerlink" title="RunLoop 实验"></a>RunLoop 实验</h1><p>基于官方文档的介绍，自己做了一系列的实验，想来验证一下RunLoop的流程。</p>
+<p>新建一个Single View Application工程，在viewDidLoad中用GCD的方式开辟了一个新的线程。</p>
+<h2 id="Observer实验"><a href="#Observer实验" class="headerlink" title="Observer实验"></a>Observer实验</h2><p>在新线程中，使用下面的代码添加一个观察所有事件的观察者。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">CFRunLoopRef cfLoop = CFRunLoopGetCurrent();</div><div class="line">CFRunLoopObserverRef observer = CFRunLoopObserverCreate(NULL, kCFRunLoopAllActivities, YES, 0, &amp;observerCallBack, NULL);</div><div class="line">CFRunLoopAddObserver(cfLoop, observer, kCFRunLoopDefaultMode);</div></pre></td></tr></table></figure>
+<p>观察者的回调函数是observerCallBack，我在里面简单的判断事件类型，并打印相关信息。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">void observerCallBack(CFRunLoopObserverRef observer, CFRunLoopActivity activity, void *info)&#123;</div><div class="line">    switch (activity) &#123;</div><div class="line">        case kCFRunLoopEntry:</div><div class="line">            NSLog(@&quot;run loop entry&quot;);</div><div class="line">            break;</div><div class="line">        case kCFRunLoopBeforeTimers:</div><div class="line">            NSLog(@&quot;run loop before timers&quot;);</div><div class="line">            break;</div><div class="line">        case kCFRunLoopBeforeSources:</div><div class="line">            NSLog(@&quot;run loop before sources&quot;);</div><div class="line">            break;</div><div class="line">        case kCFRunLoopBeforeWaiting:</div><div class="line">            NSLog(@&quot;run loop before waiting\n\n&quot;);</div><div class="line">            break;</div><div class="line">        case kCFRunLoopAfterWaiting:</div><div class="line">            NSLog(@&quot;run loop after waiting&quot;);</div><div class="line">            break;</div><div class="line">        case kCFRunLoopExit:</div><div class="line">            NSLog(@&quot;run loop exit&quot;);</div><div class="line">            break;</div><div class="line">        default:</div><div class="line">            break;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>为了让RunLoop跑起来，我向RunLoop里面添加了一个定时器源，在定时器的回调方法里面打印字符串@”timerAction”。最后控制台打印的信息如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">2017-07-19 17:31:37.359 LearnRunLoop[5133:178281] run loop entry</div><div class="line">2017-07-19 17:31:37.359 LearnRunLoop[5133:178281] run loop before timers</div><div class="line">2017-07-19 17:31:37.360 LearnRunLoop[5133:178281] run loop before sources</div><div class="line">2017-07-19 17:31:37.360 LearnRunLoop[5133:178281] run loop before waiting</div><div class="line"></div><div class="line">2017-07-19 17:31:39.363 LearnRunLoop[5133:178281] run loop after waiting</div><div class="line">2017-07-19 17:31:39.363 LearnRunLoop[5133:178281] timerAction</div><div class="line">2017-07-19 17:31:39.364 LearnRunLoop[5133:178281] run loop before timers</div><div class="line">2017-07-19 17:31:39.364 LearnRunLoop[5133:178281] run loop before sources</div><div class="line">2017-07-19 17:31:39.364 LearnRunLoop[5133:178281] run loop before waiting</div><div class="line"></div><div class="line">2017-07-19 17:31:41.361 LearnRunLoop[5133:178281] run loop after waiting</div><div class="line">2017-07-19 17:31:41.362 LearnRunLoop[5133:178281] timerAction</div><div class="line">......</div></pre></td></tr></table></figure>
+<p>符合官方文档的介绍。</p>
+<h2 id="自定义输入源实验"><a href="#自定义输入源实验" class="headerlink" title="自定义输入源实验"></a>自定义输入源实验</h2><p>用户自定义的输入源又称source0，其可配置三个回调函数。分别在添加输入源到runloop、runloop处理输入源事件、取消输入源的时候执行。</p>
+<p>下面代码在开辟的线程中新建一个自定义的输入源，并且添加到RunLoop中。RunLoopSourceScheduleRoutine、RunLoopSourceCancelRoutine、RunLoopSourcePerformRoutine三个回调函数中简单的打印出各自的函数名。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">NSRunLoop *myRunLoop = [NSRunLoop currentRunLoop];</div><div class="line"></div><div class="line">CFRunLoopSourceContext    context = &#123;0, (__bridge void *)(self), NULL, NULL, NULL, NULL, NULL,</div><div class="line">        &amp;RunLoopSourceScheduleRoutine,</div><div class="line">        &amp;RunLoopSourceCancelRoutine,</div><div class="line">        &amp;RunLoopSourcePerformRoutine&#125;;</div><div class="line">    </div><div class="line">CFRunLoopSourceRef runLoopSource = CFRunLoopSourceCreate(NULL, 0, &amp;context);</div><div class="line">    </div><div class="line">CFRunLoopRef cfRunLoop = CFRunLoopGetCurrent();</div><div class="line">CFRunLoopAddSource(cfRunLoop, runLoopSource, kCFRunLoopDefaultMode);</div><div class="line"></div><div class="line">// 这里保存下来runloop和runloop source，用于后面触发输入源。</div><div class="line">self.asyncRunLoop = cfRunLoop;</div><div class="line">self.asyncRunLoopSource = runLoopSource;</div><div class="line"></div><div class="line">[myRunLoop run];</div></pre></td></tr></table></figure>
+<p>然后，我在界面上添加了一个按钮，按钮的回调方法中执行下面代码，来触发输入源。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">CFRunLoopSourceSignal(self.asyncRunLoopSource);</div><div class="line">CFRunLoopWakeUp(self.asyncRunLoop);</div></pre></td></tr></table></figure>
+<p>点击按钮，打印出的信息为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">2017-07-19 20:41:10.835 LearnRunLoop[6449:226609] RunLoopSourceScheduleRoutine</div><div class="line">2017-07-19 20:41:10.838 LearnRunLoop[6449:226609] run loop entry</div><div class="line">2017-07-19 20:41:10.838 LearnRunLoop[6449:226609] run loop before timers</div><div class="line">2017-07-19 20:41:10.838 LearnRunLoop[6449:226609] run loop before sources</div><div class="line">2017-07-19 20:41:10.838 LearnRunLoop[6449:226609] run loop before waiting</div><div class="line"></div><div class="line"></div><div class="line">2017-07-19 20:41:19.422 LearnRunLoop[6449:226609] run loop after waiting</div><div class="line">2017-07-19 20:41:19.423 LearnRunLoop[6449:226609] run loop before timers</div><div class="line">2017-07-19 20:41:19.425 LearnRunLoop[6449:226609] run loop before sources</div><div class="line">2017-07-19 20:41:19.426 LearnRunLoop[6449:226609] RunLoopSourcePerformRoutine</div><div class="line">2017-07-19 20:41:19.427 LearnRunLoop[6449:226609] run loop exit</div><div class="line">2017-07-19 20:41:19.428 LearnRunLoop[6449:226609] run loop entry</div><div class="line">2017-07-19 20:41:19.429 LearnRunLoop[6449:226609] run loop before timers</div><div class="line">2017-07-19 20:41:19.429 LearnRunLoop[6449:226609] run loop before sources</div><div class="line">2017-07-19 20:41:19.430 LearnRunLoop[6449:226609] run loop before waiting</div></pre></td></tr></table></figure>
+<p>可以看到，打印出的信息有点奇怪。在执行完source0的回调后，runloop退出然后又重新进来了。根据官方文档提供的流程分析，难道不应该线程休眠吗？</p>
+<p>我又试了另一种执行runLoop的方法，用CFRunLoopRun()。结果发现打印出来的信息又不同了，打印信息如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">2017-07-19 20:56:35.721 LearnRunLoop[6609:236375] run loop after waiting</div><div class="line">2017-07-19 20:56:35.721 LearnRunLoop[6609:236375] run loop before timers</div><div class="line">2017-07-19 20:56:35.722 LearnRunLoop[6609:236375] run loop before sources</div><div class="line">2017-07-19 20:56:35.722 LearnRunLoop[6609:236375] RunLoopSourcePerformRoutine</div><div class="line">2017-07-19 20:56:35.723 LearnRunLoop[6609:236375] run loop before timers</div><div class="line">2017-07-19 20:56:35.723 LearnRunLoop[6609:236375] run loop before sources</div><div class="line">2017-07-19 20:56:35.723 LearnRunLoop[6609:236375] run loop before waiting</div></pre></td></tr></table></figure>
+<p>source0回调之后，还是没有休眠，并且exit和entry也不见了！！！这是怎么回事？这里先不解释，放到后面解释。</p>
+<!--> 9. Process the pending event.
+    * If a user-defined timer fired, process the timer event and restart the loop. Go to step 2.
+    * If an input source fired, deliver the event.
+    * If the run loop was explicitly woken up but has not yet timed out, restart the loop. Go to step 2.
+
+执行source0的回调对应着第二条。所以会退出并不意外。但是为什么又重新进入了呢？因为我们执行的是[RunLoop run]。该方法会一直保证runloop不会停止，所以又重新进入。-->
+<h2 id="基于端口的源实验"><a href="#基于端口的源实验" class="headerlink" title="基于端口的源实验"></a>基于端口的源实验</h2><p>使用基于端口的源的流程大致是： 在主线程和新线程中新建端口，并添加端口到runloop，然后进行通过端口发送消息，就会自动唤醒接受消息的线程。端口接受消息后，就会触发回调。回调方法是，端口的delegate的<code>- (void)handlePortMessage:(NSPortMessage *)message</code>方法。</p>
+<p>一开始，我使用的是官方文档提供的Cocoa接口，代码如下：</p>
+<p>主线程：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">NSPort* mainThreadPort = [NSMachPort port];</div><div class="line">[mainThreadPort setDelegate:self];</div><div class="line">[[NSRunLoop currentRunLoop] addPort:mainThreadPort forMode:NSDefaultRunLoopMode];</div></pre></td></tr></table></figure>
+<p>新线程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">NSRunLoop *myRunLoop = [NSRunLoop currentRunLoop];</div><div class="line"></div><div class="line">NSPort* myPort = [NSMachPort port];</div><div class="line">[myPort setDelegate:self];</div><div class="line">[[NSRunLoop currentRunLoop] addPort:myPort forMode:NSDefaultRunLoopMode];</div><div class="line">            </div><div class="line">NSPortMessage *msg = NSPortMessage* messageObj = [[NSPortMessage alloc] initWithSendPort:distantPort receivePort:myPort components:nil];</div><div class="line">    </div><div class="line">if (messageObj)</div><div class="line">&#123;</div><div class="line">    // Finish configuring the message and send it immediately.</div><div class="line">    [messageObj setMsgId:setMsgid:100];</div><div class="line">    [messageObj sendBeforeDate:[NSDate date]];</div><div class="line">&#125;</div><div class="line">             </div><div class="line">[myRunLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];</div><div class="line"></div><div class="line">[myRunLoop run];</div></pre></td></tr></table></figure>
+<p>本来以为会像想象的那样美好，但是编译都编译不了。报错<code>Receiver &#39;NSPortMessage&#39; for class message is a forward declaration</code>，说NSPortMessage只是一个前置声明。然后我点进去，发现果然只有一个NSPort.h里面的@class NSPortMessage;前置声明。然后我在Foundation框架里面并没有找到NSPortMessage.h的文件。然后，网上的靠谱的解释是，NSPortMessage是私有的API，苹果为了iOS的沙盒机制的安全考虑，就没有开放这个API……好吧，还有这种操作，好在OSX上还能用。</p>
+<p>这是stackoverflow上关于NSPortMessage问题的一个<a href="stackoverflow.com/questions/12384210/is-nsportmessage-in-the-ios-api">帖子</a>。</p>
+<p>无奈，只能用CoreFoundation框架的接口。具体的代码我就不贴了。总之，在新线程端口的回调函数里面打印字符串<code>@&quot;received msg&quot;</code>。</p>
+<p>然后，添加一个按钮，点击进行主线程向新线程发送消息。打印的信息是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">2017-07-19 21:43:22.169 LearnRunLoop[7203:264896] run loop after waiting</div><div class="line">2017-07-19 21:43:22.171 LearnRunLoop[7203:264896] received msg</div><div class="line">2017-07-19 21:43:22.172 LearnRunLoop[7203:264896] run loop exit</div><div class="line">2017-07-19 21:43:22.173 LearnRunLoop[7203:264896] run loop entry</div><div class="line">2017-07-19 21:43:22.173 LearnRunLoop[7203:264896] run loop before timers</div><div class="line">2017-07-19 21:43:22.173 LearnRunLoop[7203:264896] run loop before sources</div><div class="line">2017-07-19 21:43:22.173 LearnRunLoop[7203:264896] run loop before waiting</div></pre></td></tr></table></figure>
+<p>考虑到用的是<code>[myRunLoop run]</code>，换成<code>CFRunLoopRun()</code>后，打印出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">2017-07-19 21:42:28.623 LearnRunLoop[7170:263942] run loop after waiting</div><div class="line">2017-07-19 21:42:28.623 LearnRunLoop[7170:263942] received msg</div><div class="line">2017-07-19 21:42:28.624 LearnRunLoop[7170:263942] run loop before timers</div><div class="line">2017-07-19 21:42:28.625 LearnRunLoop[7170:263942] run loop before sources</div><div class="line">2017-07-19 21:42:28.625 LearnRunLoop[7170:263942] run loop before waiting</div></pre></td></tr></table></figure>
+<p>打印的信息总算和预期一致了。这个exit和entry先放着，后面解释。</p>
+<h2 id="performSelector-实验"><a href="#performSelector-实验" class="headerlink" title="performSelector 实验"></a>performSelector 实验</h2><p>还是开辟一个新线程，然后存到@property newThread。添加一个按钮，点击按钮执行：<code>[self performSelector:@selector(performMethod) onThread:self.newThread withObject:self waitUntilDone:NO]</code>。<code>performMethod</code>方法中仅打印方法名。</p>
+<p>使用[myRunLoop run]，那么打印出的信息是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">2017-07-19 21:51:51.479 LearnRunLoop[7290:270543] run loop after waiting</div><div class="line">2017-07-19 21:51:51.480 LearnRunLoop[7290:270543] run loop before timers</div><div class="line">2017-07-19 21:51:51.480 LearnRunLoop[7290:270543] run loop before sources</div><div class="line">2017-07-19 21:51:51.480 LearnRunLoop[7290:270543] performMethod</div><div class="line">2017-07-19 21:51:51.481 LearnRunLoop[7290:270543] run loop exit</div><div class="line">2017-07-19 21:51:51.482 LearnRunLoop[7290:270543] run loop entry</div><div class="line">2017-07-19 21:51:51.482 LearnRunLoop[7290:270543] run loop before timers</div><div class="line">2017-07-19 21:51:51.482 LearnRunLoop[7290:270543] run loop before sources</div><div class="line">2017-07-19 21:51:51.483 LearnRunLoop[7290:270543] run loop before waiting</div></pre></td></tr></table></figure>
+<p>使用CFRunLoopRun()，打印：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">2017-07-19 21:52:57.653 LearnRunLoop[7337:271666] run loop after waiting</div><div class="line">2017-07-19 21:52:57.657 LearnRunLoop[7337:271666] run loop before timers</div><div class="line">2017-07-19 21:52:57.658 LearnRunLoop[7337:271666] run loop before sources</div><div class="line">2017-07-19 21:52:57.658 LearnRunLoop[7337:271666] performMethod</div><div class="line">2017-07-19 21:52:57.658 LearnRunLoop[7337:271666] run loop before timers</div><div class="line">2017-07-19 21:52:57.659 LearnRunLoop[7337:271666] run loop before sources</div><div class="line">2017-07-19 21:52:57.659 LearnRunLoop[7337:271666] run loop before waiting</div></pre></td></tr></table></figure>
+<p>这里我们可以看出，performSelector方法的打印信息和source0的打印信息，基本上是一样的。因此，我怀疑performSelector方法族是不是内部使用source0来和进行通信。</p>
+<p>然后，我试了添加两个source0：source0_a和source0_b，一个的order设为-1，另一个order设为1。通过CFRunLoopRun()启动runloop后，执行下面代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">CFRunLoopSourceSignal(source0_a);</div><div class="line">CFRunLoopSourceSignal(source0_b);</div><div class="line">[self performSelector:@selector(performMethod) onThread:self.newThread withObject:self waitUntilDone:NO]</div></pre></td></tr></table></figure>
+<p>打印出来的信息是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">2017-07-19 22:46:37.032 LearnRunLoop[8446:301743] run loop after waiting</div><div class="line">2017-07-19 22:46:37.032 LearnRunLoop[8446:301743] run loop before timers</div><div class="line">2017-07-19 22:46:37.033 LearnRunLoop[8446:301743] run loop before sources</div><div class="line">2017-07-19 22:46:37.033 LearnRunLoop[8446:301743] RunLoopSourcePerformRoutine </div><div class="line">2017-07-19 22:46:37.033 LearnRunLoop[8446:301743] performMethod</div><div class="line">2017-07-19 22:46:37.034 LearnRunLoop[8446:301743] RunLoopSourceSchedudRoutine</div><div class="line">2017-07-19 22:46:37.034 LearnRunLoop[8446:301743] run loop before timers</div><div class="line">2017-07-19 22:46:37.034 LearnRunLoop[8446:301743] run loop before sources</div><div class="line">2017-07-19 22:46:37.034 LearnRunLoop[8446:301743] run loop before waiting</div></pre></td></tr></table></figure>
+<p>因此，侧面证实了performSelector方法簇是用source0实现的。</p>
+<p>如果，通过Cocoa方法启动runloop后，会发现打印出这样的信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">2017-07-19 22:38:31.529 LearnRunLoop[8239:296624] run loop after waiting</div><div class="line">2017-07-19 22:38:31.530 LearnRunLoop[8239:296624] run loop before timers</div><div class="line">2017-07-19 22:38:31.531 LearnRunLoop[8239:296624] run loop before sources</div><div class="line">2017-07-19 22:38:31.531 LearnRunLoop[8239:296624] RunLoopSourceSchedudRoutine</div><div class="line">2017-07-19 22:38:31.531 LearnRunLoop[8239:296624] run loop exit</div><div class="line">2017-07-19 22:38:31.532 LearnRunLoop[8239:296624] run loop entry</div><div class="line">2017-07-19 22:38:31.532 LearnRunLoop[8239:296624] run loop before timers</div><div class="line">2017-07-19 22:38:31.533 LearnRunLoop[8239:296624] run loop before sources</div><div class="line">2017-07-19 22:38:31.534 LearnRunLoop[8239:296624] performMethod</div><div class="line">2017-07-19 22:38:31.534 LearnRunLoop[8239:296624] run loop exit</div><div class="line">2017-07-19 22:38:31.534 LearnRunLoop[8239:296624] run loop entry</div><div class="line">2017-07-19 22:38:31.535 LearnRunLoop[8239:296624] run loop before timers</div><div class="line">2017-07-19 22:38:31.535 LearnRunLoop[8239:296624] run loop before sources</div><div class="line">2017-07-19 22:38:31.535 LearnRunLoop[8239:296624] RunLoopSourceSchedudRoutine</div><div class="line">2017-07-19 22:38:31.535 LearnRunLoop[8239:296624] run loop exit</div><div class="line">2017-07-19 22:38:31.535 LearnRunLoop[8239:296624] run loop entry</div><div class="line">2017-07-19 22:38:31.536 LearnRunLoop[8239:296624] run loop before timers</div><div class="line">2017-07-19 22:38:31.536 LearnRunLoop[8239:296624] run loop before sources</div><div class="line">2017-07-19 22:38:31.536 LearnRunLoop[8239:296624] run loop before waiting</div></pre></td></tr></table></figure>
+<p>这又是为什么呢?</p>
+<h2 id="dispatch实验"><a href="#dispatch实验" class="headerlink" title="dispatch实验"></a>dispatch实验</h2><p>苹果官方文档关于Main dispatch queue有如下说明：</p>
+<blockquote>
+<p>The main dispatch queue is a globally available serial queue that executes tasks on the application’s main thread. This queue works with the application’s run loop (if one is present) to interleave the execution of queued tasks with the execution of other event sources attached to the run loop. Because it runs on your application’s main thread, the main queue is often used as a key synchronization point for an application.</p>
+</blockquote>
+<p>为了搞清楚dispatch的block执行的位置，我们在新线程中，dispatch block到主线程。然后打印如下信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">2017-07-19 23:14:43.888 LearnRunLoop[8894:316820] run loop after waiting</div><div class="line">2017-07-19 23:14:43.889 LearnRunLoop[8894:316820] dispatchAction</div><div class="line">2017-07-19 23:14:43.889 LearnRunLoop[8894:316820] run loop before timers</div><div class="line">2017-07-19 23:14:43.889 LearnRunLoop[8894:316820] run loop before sources</div><div class="line">2017-07-19 23:14:43.890 LearnRunLoop[8894:316820] run loop before waiting</div></pre></td></tr></table></figure>
+<p>因此，猜想dispatch的block应该和timer以及source1的执行位置类似。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>在做上述实验的过程中，我们遇到了一些问题，总结一下：</p>
+<ul>
+<li>Cocoa接口和CoreFoundation接口表现不一致<ul>
+<li>Cocoa接口处理完源之后会exit和entry，而CF接口不会</li>
+<li>Cocoa接口中一次runloop中处理完多个source0，CF接口中每次runloop只处理一个source0</li>
+</ul>
+</li>
+<li>处理完source0之后，尽管没有source1，线程还是没有休眠</li>
+</ul>
+<h1 id="RunLoop源码分析"><a href="#RunLoop源码分析" class="headerlink" title="RunLoop源码分析"></a>RunLoop源码分析</h1><p>好在CoreFoundation是开源的，可以到这里下载源码<a href="http://opensource.apple.com/tarballs/CF/" target="_blank" rel="external">http://opensource.apple.com/tarballs/CF/</a>。带着上面的问题，我阅读了RunLoop的源码，然后把RunLoop相关函数的源码保留核心步骤整理如下。</p>
+<h2 id="CFRunLoopRun-amp-CFRunLoopRunInMode"><a href="#CFRunLoopRun-amp-CFRunLoopRunInMode" class="headerlink" title="CFRunLoopRun &amp; CFRunLoopRunInMode"></a>CFRunLoopRun &amp; CFRunLoopRunInMode</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">void CFRunLoopRun(void) &#123;</div><div class="line">    int32_t result;</div><div class="line">    do &#123;</div><div class="line">        result = CFRunLoopRunSpecific(CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 1.0e10, false);</div><div class="line">    &#125; while (kCFRunLoopRunStopped != result &amp;&amp; kCFRunLoopRunFinished != result);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">SInt32 CFRunLoopRunInMode(CFStringRef modeName, CFTimeInterval seconds, Boolean returnAfterSourceHandled) &#123;     </div><div class="line">    return CFRunLoopRunSpecific(CFRunLoopGetCurrent(), modeName, seconds, returnAfterSourceHandled);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>CFRunLoopRun()是对CFRunLoopRunSpecific()简单封装。kCFRunLoopRunStopped和kCFRunLoopRunFinished代表的意义我们可以从看出来CFRunLoopRun()的官方文档推测出来。</p>
+<blockquote>
+<p>The current thread’s run loop runs in the default mode until the run loop is stopped with CFRunLoopStop or all the sources and timers are removed from the default run loop mode.</p>
+</blockquote>
+<h2 id="CFRunLoopRunSpecific"><a href="#CFRunLoopRunSpecific" class="headerlink" title="CFRunLoopRunSpecific"></a>CFRunLoopRunSpecific</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">SInt32 CFRunLoopRunSpecific(CFRunLoopRef rl, CFStringRef modeName, CFTimeInterval seconds, Boolean returnAfterSourceHandled) &#123;</div><div class="line"></div><div class="line">	__CFRunLoopDoObservers(rl, currentMode, kCFRunLoopEntry);</div><div class="line">	result = __CFRunLoopRun(rl, currentMode, seconds, returnAfterSourceHandled, previousMode);</div><div class="line">	__CFRunLoopDoObservers(rl, currentMode, kCFRunLoopExit);</div><div class="line"></div><div class="line">   return result;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>CFRunLoopRunSpecific虽然没有__前缀，但是还是一个私有的API。其几个参数的含义如下：</p>
+<ul>
+<li>CFRunLoopRef rl </li>
+<li>CFStringRef modeName ：mode的名字</li>
+<li>CFTimeInterval seconds ： RunLoop的运行时间，超时后就退出RunLoop</li>
+<li>Boolean returnAfterSourceHandled：YES表示RunLoop处理完一次source之后就exit；NO表示不exit，直到运行时间到才exit</li>
+</ul>
+<p>因为，CFRunLoopRun()调用CFRunLoopRunSpecific时，returnAfterSourceHandled是false，所以在处理完一次source之后不会退出。</p>
+<p>那对应的Cocoa方法呢？</p>
+<p>NSRunLoop的run方法实际上是循环调用runMode:beforeDate:方法，这个在官方文档有说明。</p>
+<blockquote>
+<p>it runs the receiver in the NSDefaultRunLoopMode by repeatedly invoking<br>runMode:beforeDate:</p>
+</blockquote>
+<p>而runMode:beforeDate:方法在处理了一次source之后会立即返回，下面是官方文档对其返回值的说明：</p>
+<blockquote>
+<p>YES if the run loop ran and processed an input source or if the specified timeout value was reached; otherwise, NO if the run loop could not be started.</p>
+</blockquote>
+<p>其实在RunLoop的官方编程指南上也有提到：</p>
+<blockquote>
+<p>The input sources deliver asynchronous events to the corresponding handlers and cause the runUntilDate: method (called on the thread’s associated NSRunLoop object) to exit. Timer sources deliver events to their handler routines but do not cause the run loop to exit.</p>
+</blockquote>
+<p>所以，NSRunLoop的run方法处理了一次source之后，会退出runloop，然后又重新进入runloop。我们上面的现象也就解释清楚了。</p>
+<p>剩下的问题：</p>
+<ul>
+<li>为什么处理完source0后不会立即休眠？</li>
+<li>performSelector函数簇是不是真的通过source0实现的？</li>
+<li>dispatch的主线程的block是在哪执行的？</li>
+</ul>
+<p>下面通过源码来解决这些问题。</p>
+<h2 id="CFRunLoopRun"><a href="#CFRunLoopRun" class="headerlink" title="__CFRunLoopRun"></a>__CFRunLoopRun</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div></pre></td><td class="code"><pre><div class="line">static int32_t __CFRunLoopRun(CFRunLoopRef rl, CFRunLoopModeRef rlm, CFTimeInterval seconds, Boolean stopAfterHandle, CFRunLoopModeRef previousMode) &#123;</div><div class="line">	</div><div class="line">	if( RunLoop被停止 )&#123;</div><div class="line">		return kCFRunLoopRunStopped;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	retVal = 0;</div><div class="line">	didDispatchPortLastTime = true;</div><div class="line">	</div><div class="line">	do&#123;</div><div class="line">		__CFRunLoopDoObservers(rl, rlm, kCFRunLoopBeforeTimers);</div><div class="line">		__CFRunLoopDoObservers(rl, rlm, kCFRunLoopBeforeSources);</div><div class="line">		  	</div><div class="line">		__CFRunLoopDoBlocks(rl, rlm);</div><div class="line">			</div><div class="line">		Boolean sourceHandledThisLoop = __CFRunLoopDoSources0(rl, rlm, stopAfterHandle);</div><div class="line">		// sourceHandledThisLoop 值为true，代表着存在并处理了source0，否则为false</div><div class="line">		if (sourceHandledThisLoop) &#123;</div><div class="line">			__CFRunLoopDoBlocks(rl, rlm);</div><div class="line">       &#125;</div><div class="line">		</div><div class="line">		// poll 为true代表着不进行休眠，false反之</div><div class="line">		Boolean poll = sourceHandledThisLoop || seconds &lt;= 0.0; </div><div class="line">		 </div><div class="line">		// 如果该线程是主线程的话，在这里检测是否有dispatch到本线程的block</div><div class="line">		if ( 当前线程是主线程 &amp;&amp; !didDispatchPortLastTime) &#123;</div><div class="line">		    //__CFRunLoopServiceMachPort用于接受指定端口的消息,最后一个参数代表当端口无消息的时候是否休眠,0是立刻返回不休眠,TIMEOUT_INFINITY代表休眠</div><div class="line">		    if (__CFRunLoopServiceMachPort(dispatchPort, &amp;msg, sizeof(msg_buffer), &amp;livePort, 0)) &#123;</div><div class="line">		    	// 检测到的话，立刻跳转去处理</div><div class="line">		       goto handle_msg;</div><div class="line">		    &#125;</div><div class="line">		&#125;</div><div class="line">		didDispatchPortLastTime = false;</div><div class="line">		</div><div class="line">		if (!poll) __CFRunLoopDoObservers(rl, rlm, kCFRunLoopBeforeWaiting);</div><div class="line">		</div><div class="line">       __CFRunLoopServiceMachPort(waitSet, &amp;msg, sizeof(msg_buffer), &amp;livePort, poll ? 0 : TIMEOUT_INFINITY);</div><div class="line">       </div><div class="line">       if (!poll ) __CFRunLoopDoObservers(rl, rlm, kCFRunLoopAfterWaiting);</div><div class="line">handle_msg:;</div><div class="line"></div><div class="line">		if( 被显式唤醒 )&#123;</div><div class="line">			// 啥都不做</div><div class="line">		&#125;</div><div class="line">		else if( 被timer唤醒 )&#123;</div><div class="line">			__CFRunLoopDoTimers();</div><div class="line">		&#125;</div><div class="line">		else if( 被GCD唤醒 )&#123;</div><div class="line">			__CFRUNLOOP_IS_SERVICING_THE_MAIN_DISPATCH_QUEUE__();</div><div class="line">          sourceHandledThisLoop = true;</div><div class="line">		&#125;</div><div class="line">		else&#123;</div><div class="line">			sourceHandledThisLoop = __CFRunLoopDoSource1() || sourceHandledThisLoop;</div><div class="line">		&#125;</div><div class="line">		</div><div class="line">		__CFRunLoopDoBlocks(rl, rlm);</div><div class="line">	</div><div class="line">		if (sourceHandledThisLoop &amp;&amp; stopAfterHandle) &#123;</div><div class="line">			retVal = kCFRunLoopRunHandledSource;</div><div class="line">		&#125; else if ( runloop超时时间到 ) &#123;</div><div class="line">			retVal = kCFRunLoopRunTimedOut;</div><div class="line">		&#125; else if ( runloop被停止 ) &#123;</div><div class="line">	   		retVal = kCFRunLoopRunStopped;</div><div class="line">		&#125; else if ( RunLoopMode里面为空 ) &#123;</div><div class="line">		   	retVal = kCFRunLoopRunFinished;</div><div class="line">		&#125;</div><div class="line"></div><div class="line">	&#125;while( retVal == 0 );</div><div class="line">		</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>因此，上面的未解决的问题也有了答案。</p>
+<ul>
+<li>在执行了一次source0之后，因为poll为true，所以线程不进行休眠。 </li>
+<li>根据源码，以及我们上面做的实验，performSelector确实被当做source0处理的。</li>
+<li>dispatch的主线程的block是在线程唤醒后立即执行的。</li>
+</ul>
+<p>源码中还有<code>__CFRunLoopDoBlocks</code>函数。此函数执行的block是<code>CFRunLoopPerformBlock</code>函数添加到RunLoop中的，<code>CFRunLoopPerformBlock</code>函数不会唤醒线程。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="http://developer.apple.com/library/content/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html#//apple_ref/doc/uid/10000057i-CH16-SW1" target="_blank" rel="external">Threading Programming Guide</a></li>
+<li><a href="http://blog.ibireme.com/2015/05/18/runloop/" target="_blank" rel="external">深入理解RunLoop</a></li>
+<li><a href="http://zhuanlan.zhihu.com/p/27650660" target="_blank" rel="external">Run Loop 记录与源码注释</a></li>
+<li><a href="http://v.youku.com/v_show/id_XODgxODkzODI0.html" target="_blank" rel="external">iOS线下分享《RunLoop》by 孙源@sunnyxx</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/07/12/CAMediaTiming协议/" rel="next" title="CAMediaTiming协议">
+                <i class="fa fa-chevron-left"></i> CAMediaTiming协议
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/07/19/RunLoop/"
+           data-title="RunLoop" data-url="http://yoursite.com/2017/07/19/RunLoop/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="wanston" />
+          <p class="site-author-name" itemprop="name">wanston</p>
+           
+              <p class="site-description motion-element" itemprop="description">Stay hungry, stay foolish.</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">9</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#RunLoop基本知识"><span class="nav-number">1.</span> <span class="nav-text">RunLoop基本知识</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#RunLoop-Sources"><span class="nav-number">1.1.</span> <span class="nav-text">RunLoop Sources</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RunLoop-观察者"><span class="nav-number">1.2.</span> <span class="nav-text">RunLoop 观察者</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RunLoop-流程"><span class="nav-number">1.3.</span> <span class="nav-text">RunLoop 流程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RunLoop-实验"><span class="nav-number">2.</span> <span class="nav-text">RunLoop 实验</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Observer实验"><span class="nav-number">2.1.</span> <span class="nav-text">Observer实验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自定义输入源实验"><span class="nav-number">2.2.</span> <span class="nav-text">自定义输入源实验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于端口的源实验"><span class="nav-number">2.3.</span> <span class="nav-text">基于端口的源实验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#performSelector-实验"><span class="nav-number">2.4.</span> <span class="nav-text">performSelector 实验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#dispatch实验"><span class="nav-number">2.5.</span> <span class="nav-text">dispatch实验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#小结"><span class="nav-number">2.6.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RunLoop源码分析"><span class="nav-number">3.</span> <span class="nav-text">RunLoop源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CFRunLoopRun-amp-CFRunLoopRunInMode"><span class="nav-number">3.1.</span> <span class="nav-text">CFRunLoopRun & CFRunLoopRunInMode</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CFRunLoopRunSpecific"><span class="nav-number">3.2.</span> <span class="nav-text">CFRunLoopRunSpecific</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CFRunLoopRun"><span class="nav-number">3.3.</span> <span class="nav-text">__CFRunLoopRun</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文献"><span class="nav-number">3.4.</span> <span class="nav-text">参考文献</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">wanston</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"wanston"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
