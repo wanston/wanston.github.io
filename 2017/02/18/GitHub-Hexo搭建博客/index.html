@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next mist use-motion" lang="zh-Hans">
+<html class="theme-next pisces use-motion" lang="zh-Hans">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -91,7 +91,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="GitHub+Hexo搭建博客">
 <meta property="og:url" content="http://yoursite.com/2017/02/18/GitHub-Hexo搭建博客/index.html">
-<meta property="og:site_name" content="Wanston's Blog">
+<meta property="og:site_name" content="Mr.W的文字站">
 <meta property="og:description" content="原理搭建个人博客首先需要一个服务器，然后在该服务器上安装服务器软件，搭建你的个人博客网站，这样别人才可以访问到你的个人博客。我们使用GitHub作为服务器，然后在本地安装hexo，hexo是一个开源的静态博客生成器，我们利用hexo生成自己的博客网站，把生成的网站文件push到自己的GitHub仓库中去，这样就可以通过GitHub Pages功能访问到自己的仓库，也就是访问到自己的个人博客。下面就">
 <meta property="og:image" content="http://yoursite.com/images/GitHub-Hexo搭建博客/1.png">
 <meta property="og:updated_time" content="2017-06-15T12:38:19.000Z">
@@ -106,7 +106,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Mist',
+    scheme: 'Pisces',
     sidebar: {"position":"left","display":"post"},
     fancybox: true,
     motion: true,
@@ -132,7 +132,7 @@
 
 
 
-  <title> GitHub+Hexo搭建博客 | Wanston's Blog </title>
+  <title> GitHub+Hexo搭建博客 | Mr.W的文字站 </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -141,6 +141,15 @@
 
 
 
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-103060845-1', 'auto');
+  ga('send', 'pageview');
+</script>
 
 
 
@@ -167,12 +176,12 @@
   <div class="custom-logo-site-title">
     <a href="/"  class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <span class="site-title">Wanston's Blog</span>
+      <span class="site-title">Mr.W的文字站</span>
       <span class="logo-line-after"><i></i></span>
     </a>
   </div>
     
-      <p class="site-subtitle">This blog is for wanston in HUST.</p>
+      <p class="site-subtitle">727348402@qq.com，欢迎交流~</p>
     
 </div>
 
@@ -262,15 +271,15 @@
   <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/18/GitHub-Hexo搭建博客/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="wanston">
+    <meta itemprop="name" content="Mr.W">
     <meta itemprop="description" content="">
     <meta itemprop="image" content="/images/avatar.png">
   </span>
 
   <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Wanston's Blog">
+    <meta itemprop="name" content="Mr.W的文字站">
     <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Wanston's Blog" src="">
+      <img style="display:none;" itemprop="url image" alt="Mr.W的文字站" src="">
     </span>
   </span>
 
@@ -334,16 +343,6 @@
 
           
             
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2017/02/18/GitHub-Hexo搭建博客/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/18/GitHub-Hexo搭建博客/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
           
 
           
@@ -373,28 +372,28 @@
 <p>如果没能开启GitHub Pages的话，检查一下你的repository里面是不是空的，如果是空的，就添加一个文件使其非空就可以了。我一开始就是没能开启，然后添加了README.md文件就可以了。</p>
 <h2 id="安装node-js"><a href="#安装node-js" class="headerlink" title="安装node.js"></a>安装node.js</h2><p>因为hexo是使用node.js开发的，所以首先安装<a href="https://nodejs.org/en/" target="_blank" rel="external">node.js</a>。</p>
 <h2 id="安装hexo"><a href="#安装hexo" class="headerlink" title="安装hexo"></a>安装hexo</h2><p><a href="https://hexo.io/zh-cn/" target="_blank" rel="external">hexo官网点这里</a>。<br>打开terminal，新建一个文件夹，用于安装hexo，然后进入该文件夹，写入下列命令行。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ mkdir Blog</div><div class="line">$ cd Blog</div><div class="line">$ sudo npm install -g hexo</div><div class="line">$ hexo init</div><div class="line">$ npm install hexo-deployer-openshift --save // 安装deploy插件，用于推送到git仓库</div><div class="line">$ hexo generate // 生成博客</div><div class="line">$ hexo server // 打开本地服务器</div></pre></td></tr></table></figure>
+<figure class="highlight gams"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="symbol">$</span> mkdir Blog</div><div class="line"><span class="symbol">$</span> cd Blog</div><div class="line"><span class="symbol">$</span> sudo npm install -g hexo</div><div class="line"><span class="symbol">$</span> hexo init</div><div class="line"><span class="symbol">$</span> npm install hexo-deployer-openshift --save <span class="comment">// 安装deploy插件，用于推送到git仓库</span></div><div class="line"><span class="symbol">$</span> hexo generate <span class="comment">// 生成博客</span></div><div class="line"><span class="symbol">$</span> hexo server <span class="comment">// 打开本地服务器</span></div></pre></td></tr></table></figure>
 <p>此时打开<em><a href="http://localhost:4000" target="_blank" rel="external">http://localhost:4000</a></em>，就会看到已经生成的博客是什么样子。</p>
 <h2 id="配置hexo"><a href="#配置hexo" class="headerlink" title="配置hexo"></a>配置hexo</h2><p>在安装hexo的文件夹（我的是Blog/）下，打开站点配置文件_config.yml，在文件末尾添加你的GitHub仓库的地址，如下图所示。这样本地的文章才能deploy到GitHub仓库。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">deploy:</div><div class="line">  type: git</div><div class="line">  repo: https://github.com/wanston/wanston.github.io.git</div><div class="line">  branch: master</div></pre></td></tr></table></figure>
+<figure class="highlight less"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="attribute">deploy</span>:</div><div class="line">  <span class="attribute">type</span>: git</div><div class="line">  <span class="attribute">repo</span>: <span class="attribute">https</span>:<span class="comment">//github.com/wanston/wanston.github.io.git</span></div><div class="line">  <span class="attribute">branch</span>: master</div></pre></td></tr></table></figure>
 <p>此时执行</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ hexo generate</div><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
+<figure class="highlight verilog"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ hexo <span class="keyword">generate</span></div><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
 <p>然后，就可以通过<em><a href="http://wanston.github.io" target="_blank" rel="external">http://wanston.github.io</a></em>访问你的博客站了。</p>
 <p>在文件_config.yml里面，同样可以配置博客站点的各种信息，包括标题、作者、语言、头像等等。<br>需要注意的是，在该文件里面如果要索引一个本地文件，根目录/代表的是，hexo文件夹/source/，我的就是Blog/source/。</p>
-<h2 id="第一篇博客"><a href="#第一篇博客" class="headerlink" title="第一篇博客"></a>第一篇博客</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new &quot;我的第一篇文章&quot; #新建文章</div></pre></td></tr></table></figure>
+<h2 id="第一篇博客"><a href="#第一篇博客" class="headerlink" title="第一篇博客"></a>第一篇博客</h2><figure class="highlight axapta"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo <span class="keyword">new</span> <span class="string">"我的第一篇文章"</span> <span class="meta">#新建文章</span></div></pre></td></tr></table></figure>
 <p>新建的文章的本地路径是 <em>Blog/source/_posts/我的第一篇文章.md</em>，编辑该文件，就可以用markdown语法写博客了。写完之后就generate和deploy就可以了。</p>
 <h2 id="更换主题"><a href="#更换主题" class="headerlink" title="更换主题"></a>更换主题</h2><p>我的博客的主题是NexT，GitHub上搜hexo-theme-next就能找到。<br>使用该主题的具体方法见该主题的<a href="http://theme-next.iissnan.com" target="_blank" rel="external">官网</a>。</p>
 <h2 id="添加categories和tags页面"><a href="#添加categories和tags页面" class="headerlink" title="添加categories和tags页面"></a>添加categories和tags页面</h2><p>写文章的时，在文章开始加入categories和tags字段，为文章分类和添加标签。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">---</div><div class="line">title: GitHub+Hexo搭建博客</div><div class="line">date: 2017-02-18 11:02:54</div><div class="line">categories: 杂七杂八</div><div class="line">tags: Hexo</div><div class="line">---</div></pre></td></tr></table></figure>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="meta">---</span></div><div class="line"><span class="attr">title:</span> GitHub+Hexo搭建博客</div><div class="line"><span class="attr">date:</span> <span class="number">2017</span><span class="bullet">-02</span><span class="bullet">-18</span> <span class="number">11</span>:<span class="number">02</span>:<span class="number">54</span></div><div class="line"><span class="attr">categories:</span> 杂七杂八</div><div class="line"><span class="attr">tags:</span> Hexo</div><div class="line"><span class="meta">---</span></div></pre></td></tr></table></figure>
 <p>deploy之后，点进categories和tags页面会发现啥都没有，因为此时博客站上并没有这两个页面，解决办法：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ hexo new page tags</div><div class="line">$ hexo new page categories</div><div class="line">$ vim hexo_path/source/tags/index.md</div></pre></td></tr></table></figure>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ hexo <span class="keyword">new</span> page <span class="keyword">tags</span></div><div class="line">$ hexo <span class="keyword">new</span> page categories</div><div class="line">$ <span class="keyword">vim</span> hexo_path/<span class="keyword">source</span>/<span class="keyword">tags</span>/<span class="built_in">index</span>.md</div></pre></td></tr></table></figure>
 <p>在md文档头部添加： type: tags</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ vim hexo_path/source/categories/index.md</div></pre></td></tr></table></figure>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">vim</span> hexo_path/<span class="keyword">source</span>/categories/<span class="built_in">index</span>.md</div></pre></td></tr></table></figure>
 <p>在md文档头部添加： type: categories。<br>然后generate和deploy，博客上的这两个页面就会正确出现了。</p>
 <h2 id="开通评论"><a href="#开通评论" class="headerlink" title="开通评论"></a>开通评论</h2><p>开通评论的方法具体见Next主题的<a href="http://theme-next.iissnan.com" target="_blank" rel="external">官网</a>。<br>开通主题后，我发现我的categories和tags页面也有评论功能，看起来很丑，也不需要，就想关闭这两个页面的评论功能。下面是具体方法：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ vim hexo_path/source/tags/index.md</div></pre></td></tr></table></figure>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">vim</span> hexo_path/<span class="keyword">source</span>/<span class="keyword">tags</span>/<span class="built_in">index</span>.md</div></pre></td></tr></table></figure>
 <p>在md文档头部添加： comment: false</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ vim hexo_path/source/categories/index.md</div></pre></td></tr></table></figure>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ <span class="keyword">vim</span> hexo_path/<span class="keyword">source</span>/categories/<span class="built_in">index</span>.md</div></pre></td></tr></table></figure>
 <p>在md文档头部添加： comment: false</p>
 
       
@@ -470,10 +469,6 @@
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2017/02/18/GitHub-Hexo搭建博客/"
-           data-title="GitHub+Hexo搭建博客" data-url="http://yoursite.com/2017/02/18/GitHub-Hexo搭建博客/">
-      </div>
-    
   </div>
 
 
@@ -509,10 +504,10 @@
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.png"
-               alt="wanston" />
-          <p class="site-author-name" itemprop="name">wanston</p>
+               alt="Mr.W" />
+          <p class="site-author-name" itemprop="name">Mr.W</p>
            
-              <p class="site-description motion-element" itemprop="description">Stay hungry, stay foolish.</p>
+              <p class="site-description motion-element" itemprop="description">一个不善表达的工科男</p>
           
         </div>
         <nav class="site-state motion-element">
@@ -598,7 +593,7 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">wanston</span>
+  <span class="author" itemprop="copyrightHolder">Mr.W</span>
 </div>
 
 
@@ -609,7 +604,7 @@
 <div class="theme-info">
   主题 -
   <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Mist
+    NexT.Pisces
   </a>
 </div>
 
@@ -677,6 +672,13 @@
   
   
 
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
   
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
 <script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
@@ -692,39 +694,32 @@
 
   
 
-  
-    
-  
 
-  <script type="text/javascript">
-    var duoshuoQuery = {short_name:"wanston"};
-    (function() {
-      var ds = document.createElement('script');
-      ds.type = 'text/javascript';ds.async = true;
-      ds.id = 'duoshuo-script';
-      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
-      ds.charset = 'UTF-8';
-      (document.getElementsByTagName('head')[0]
-      || document.getElementsByTagName('body')[0]).appendChild(ds);
-    })();
-  </script>
 
   
-    
-    
-    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
-    <script src="/js/src/hook-duoshuo.js"></script>
+
+
+
+
+	
+
+
+
+
+
   
 
 
 
 
 
+  
 
 
 
 
 
+  
 
 
 

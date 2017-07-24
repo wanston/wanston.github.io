@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next mist use-motion" lang="zh-Hans">
+<html class="theme-next pisces use-motion" lang="zh-Hans">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -91,7 +91,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="iOS绘图之drawRect:">
 <meta property="og:url" content="http://yoursite.com/2017/02/19/iOS绘图之drawRect/index.html">
-<meta property="og:site_name" content="Wanston's Blog">
+<meta property="og:site_name" content="Mr.W的文字站">
 <meta property="og:description" content="drawRect:中的官方注释新建一个UIView的子类，Xcode会自动生成下面的代码：12345678/*// Only override drawRect: if you perform custom drawing.// An empty implementation adversely affects performance during animation.- (void)drawRe">
 <meta property="og:updated_time" content="2017-02-20T08:28:10.000Z">
 <meta name="twitter:card" content="summary">
@@ -104,7 +104,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Mist',
+    scheme: 'Pisces',
     sidebar: {"position":"left","display":"post"},
     fancybox: true,
     motion: true,
@@ -130,7 +130,7 @@
 
 
 
-  <title> iOS绘图之drawRect: | Wanston's Blog </title>
+  <title> iOS绘图之drawRect: | Mr.W的文字站 </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -139,6 +139,15 @@
 
 
 
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-103060845-1', 'auto');
+  ga('send', 'pageview');
+</script>
 
 
 
@@ -165,12 +174,12 @@
   <div class="custom-logo-site-title">
     <a href="/"  class="brand" rel="start">
       <span class="logo-line-before"><i></i></span>
-      <span class="site-title">Wanston's Blog</span>
+      <span class="site-title">Mr.W的文字站</span>
       <span class="logo-line-after"><i></i></span>
     </a>
   </div>
     
-      <p class="site-subtitle">This blog is for wanston in HUST.</p>
+      <p class="site-subtitle">727348402@qq.com，欢迎交流~</p>
     
 </div>
 
@@ -260,15 +269,15 @@
   <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/19/iOS绘图之drawRect/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="wanston">
+    <meta itemprop="name" content="Mr.W">
     <meta itemprop="description" content="">
     <meta itemprop="image" content="/images/avatar.png">
   </span>
 
   <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Wanston's Blog">
+    <meta itemprop="name" content="Mr.W的文字站">
     <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Wanston's Blog" src="">
+      <img style="display:none;" itemprop="url image" alt="Mr.W的文字站" src="">
     </span>
   </span>
 
@@ -332,16 +341,6 @@
 
           
             
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2017/02/19/iOS绘图之drawRect/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/19/iOS绘图之drawRect/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
           
 
           
@@ -364,10 +363,10 @@
       
 
       
-        <h1 id="drawRect-中的官方注释"><a href="#drawRect-中的官方注释" class="headerlink" title="drawRect:中的官方注释"></a>drawRect:中的官方注释</h1><p>新建一个UIView的子类，Xcode会自动生成下面的代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">/*</div><div class="line">// Only override drawRect: if you perform custom drawing.</div><div class="line">// An empty implementation adversely affects performance during animation.</div><div class="line">- (void)drawRect:(CGRect)rect</div><div class="line">&#123;</div><div class="line">    // Drawing code</div><div class="line">&#125;</div><div class="line">*/</div></pre></td></tr></table></figure></p>
+        <h1 id="drawRect-中的官方注释"><a href="#drawRect-中的官方注释" class="headerlink" title="drawRect:中的官方注释"></a>drawRect:中的官方注释</h1><p>新建一个UIView的子类，Xcode会自动生成下面的代码：<br><figure class="highlight 1c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">/*</div><div class="line"><span class="comment">// Only override drawRect: if you perform custom drawing.</span></div><div class="line"><span class="comment">// An empty implementation adversely affects performance during animation.</span></div><div class="line">- (void)drawRect:(CGRect)rect</div><div class="line">&#123;</div><div class="line">    <span class="comment">// Drawing code</span></div><div class="line">&#125;</div><div class="line">*/</div></pre></td></tr></table></figure></p>
 <p>下面解释为什么会有这样一段注释。</p>
-<h1 id="UIView的显示"><a href="#UIView的显示" class="headerlink" title="UIView的显示"></a>UIView的显示</h1><p>查看UIView.h，发现UIView有如下的一个@property<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">@property(nonatomic,readonly,strong)                 CALayer  *layer;              // returns view&apos;s layer. Will always return a non-nil value. view is layer&apos;s delegate</div></pre></td></tr></table></figure></p>
-<p>UIView的显示实际上由CALayer所负责，显示什么内容由CALayer的属性contents决定，这个contents就是CALayer的backing store。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">/* An object providing the contents of the layer, typically a CGImageRef,</div><div class="line"> * but may be something else. (For example, NSImage objects are</div><div class="line"> * supported on Mac OS X 10.6 and later.) Default value is nil.</div><div class="line"> * Animatable. */</div><div class="line"></div><div class="line">@property(nullable, strong) id contents;</div></pre></td></tr></table></figure></p>
+<h1 id="UIView的显示"><a href="#UIView的显示" class="headerlink" title="UIView的显示"></a>UIView的显示</h1><p>查看UIView.h，发现UIView有如下的一个@property<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">@property</span>(<span class="keyword">nonatomic</span>,<span class="keyword">readonly</span>,<span class="keyword">strong</span>)                 <span class="built_in">CALayer</span>  *layer;              <span class="comment">// returns view's layer. Will always return a non-nil value. view is layer's delegate</span></div></pre></td></tr></table></figure></p>
+<p>UIView的显示实际上由CALayer所负责，显示什么内容由CALayer的属性contents决定，这个contents就是CALayer的backing store。<br><figure class="highlight applescript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">/* An object providing <span class="keyword">the</span> <span class="built_in">contents</span> <span class="keyword">of</span> <span class="keyword">the</span> layer, typically a CGImageRef,</div><div class="line"> * <span class="keyword">but</span> may be something <span class="keyword">else</span>. (For example, NSImage objects are</div><div class="line"> * supported <span class="keyword">on</span> Mac OS X <span class="number">10.6</span> <span class="keyword">and</span> later.) Default value <span class="keyword">is</span> nil.</div><div class="line"> * Animatable. */</div><div class="line"></div><div class="line">@<span class="keyword">property</span>(nullable, strong) <span class="built_in">id</span> <span class="built_in">contents</span>;</div></pre></td></tr></table></figure></p>
 <p>UIView根据-drawRect是否存在，来决定绘制的一系列细节，即使-drawRect:里面什么都不做。我通过实验验证，得到如下结果：</p>
 <p>如果-drawRect: 存在：</p>
 <ul>
@@ -464,10 +463,6 @@
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2017/02/19/iOS绘图之drawRect/"
-           data-title="iOS绘图之drawRect:" data-url="http://yoursite.com/2017/02/19/iOS绘图之drawRect/">
-      </div>
-    
   </div>
 
 
@@ -503,10 +498,10 @@
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="/images/avatar.png"
-               alt="wanston" />
-          <p class="site-author-name" itemprop="name">wanston</p>
+               alt="Mr.W" />
+          <p class="site-author-name" itemprop="name">Mr.W</p>
            
-              <p class="site-description motion-element" itemprop="description">Stay hungry, stay foolish.</p>
+              <p class="site-description motion-element" itemprop="description">一个不善表达的工科男</p>
           
         </div>
         <nav class="site-state motion-element">
@@ -592,7 +587,7 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">wanston</span>
+  <span class="author" itemprop="copyrightHolder">Mr.W</span>
 </div>
 
 
@@ -603,7 +598,7 @@
 <div class="theme-info">
   主题 -
   <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Mist
+    NexT.Pisces
   </a>
 </div>
 
@@ -671,6 +666,13 @@
   
   
 
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
   
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
 <script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
@@ -686,39 +688,32 @@
 
   
 
-  
-    
-  
 
-  <script type="text/javascript">
-    var duoshuoQuery = {short_name:"wanston"};
-    (function() {
-      var ds = document.createElement('script');
-      ds.type = 'text/javascript';ds.async = true;
-      ds.id = 'duoshuo-script';
-      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
-      ds.charset = 'UTF-8';
-      (document.getElementsByTagName('head')[0]
-      || document.getElementsByTagName('body')[0]).appendChild(ds);
-    })();
-  </script>
 
   
-    
-    
-    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
-    <script src="/js/src/hook-duoshuo.js"></script>
+
+
+
+
+	
+
+
+
+
+
   
 
 
 
 
 
+  
 
 
 
 
 
+  
 
 
 
