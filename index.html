@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next pisces use-motion" lang="zh-Hans">
+<html class="theme-next mist use-motion" lang="zh-Hans">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -103,7 +103,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Pisces',
+    scheme: 'Mist',
     sidebar: {"position":"left","display":"post"},
     fancybox: true,
     motion: true,
@@ -348,169 +348,15 @@
       
         
           
-            <p>最近在学iOS系统的RunLoop的知识，官方文档写的比较详细，但是一些细节并没有涉及到，而且网上其他的关于RunLoop的文章鱼龙混杂、良莠不齐，在这里，我推荐一下这一篇博客<a href="http://blog.ibireme.com/2015/05/18/runloop/" target="_blank" rel="external">《深入理解RunLoop》</a>。这篇博客对于<a href="http://opensource.apple.com/tarballs/CF/" target="_blank" rel="external">RunLoop的源码</a>进行了一定的分析，讲得很详细。在这里，自己把学习过程中遇到的一些值得注意的地方，还有一些官方文档没有提到的知识点梳理一下。</p>
-<h1 id="RunLoop基本知识"><a href="#RunLoop基本知识" class="headerlink" title="RunLoop基本知识"></a>RunLoop基本知识</h1><h2 id="RunLoop-Sources"><a href="#RunLoop-Sources" class="headerlink" title="RunLoop Sources"></a>RunLoop Sources</h2><p>官方文档介绍，RunLoop的接收两种源的事件，输入源（Input Source）和定时器源（Timer Sources）。</p>
-<p>输入源分为三种：</p>
-<ul>
-<li>基于端口的输入源 （Port-Based Sources）</li>
-<li>自定义输入源 （Custom Input Sources）</li>
-<li>Cocoa提供的PerformSelector输入源 （Cocoa Perform Selector Sources）</li>
-</ul>
-<h2 id="RunLoop-观察者"><a href="#RunLoop-观察者" class="headerlink" title="RunLoop 观察者"></a>RunLoop 观察者</h2><p>用户可以在一次RunLoop循环中添加观察者（Run Loop Observers），观察RunLoop中的几个固定的事件。当这些事件到来时，会触发观察者的回调。</p>
-<p>官方文档表述的可观察的事件包括：</p>
-<blockquote>
-<ul>
-<li>The entrance to the run loop.</li>
-<li>When the run loop is about to process a timer.</li>
-<li>When the run loop is about to process an input source.</li>
-<li>When the run loop is about to go to sleep.</li>
-<li>When the run loop has woken up, but before it has processed the event that woke it up.</li>
-<li>The exit from the run loop.</li>
-</ul>
-</blockquote>
-<h2 id="RunLoop-流程"><a href="#RunLoop-流程" class="headerlink" title="RunLoop 流程"></a>RunLoop 流程</h2><p>官方文档表述的RunLoop处理事件的流程如下：</p>
-<blockquote>
-<ol>
-<li>Notify observers that the run loop has been entered.</li>
-<li>Notify observers that any ready timers are about to fire.</li>
-<li>Notify observers that any input sources that are not port based are about to fire.</li>
-<li>Fire any non-port-based input sources that are ready to fire.</li>
-<li>If a port-based input source is ready and waiting to fire, process the event immediately. Go to step 9.</li>
-<li>Notify observers that the thread is about to sleep.</li>
-<li>Put the thread to sleep until one of the following events occurs:<ul>
-<li>An event arrives for a port-based input source.</li>
-<li>A timer fires.</li>
-<li>The timeout value set for the run loop expires.</li>
-<li>The run loop is explicitly woken up.</li>
-</ul>
-</li>
-<li>Notify observers that the thread just woke up.</li>
-<li>Process the pending event.<ul>
-<li>If a user-defined timer fired, process the timer event and restart the loop. Go to step 2.</li>
-<li>If an input source fired, deliver the event.</li>
-<li>If the run loop was explicitly woken up but has not yet timed out, restart the loop. Go to step 2.</li>
-</ul>
-</li>
-<li>Notify observers that the run loop has exited.</li>
-</ol>
-</blockquote>
-<h1 id="RunLoop-实验"><a href="#RunLoop-实验" class="headerlink" title="RunLoop 实验"></a>RunLoop 实验</h1><p>基于官方文档的介绍，自己做了一系列的实验，想来验证一下RunLoop的流程。</p>
-<p>新建一个Single View Application工程，在viewDidLoad中用GCD的方式开辟了一个新的线程。</p>
-<h2 id="Observer实验"><a href="#Observer实验" class="headerlink" title="Observer实验"></a>Observer实验</h2><p>在新线程中，使用下面的代码添加一个观察所有事件的观察者。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">CFRunLoopRef cfLoop = CFRunLoopGetCurrent();</div><div class="line">CFRunLoopObserverRef observer = CFRunLoopObserverCreate(NULL, kCFRunLoopAllActivities, YES, 0, &amp;observerCallBack, NULL);</div><div class="line">CFRunLoopAddObserver(cfLoop, observer, kCFRunLoopDefaultMode);</div></pre></td></tr></table></figure>
-<p>观察者的回调函数是observerCallBack，我在里面简单的判断事件类型，并打印相关信息。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">void observerCallBack(CFRunLoopObserverRef observer, CFRunLoopActivity activity, void *info)&#123;</div><div class="line">    switch (activity) &#123;</div><div class="line">        case kCFRunLoopEntry:</div><div class="line">            NSLog(@&quot;run loop entry&quot;);</div><div class="line">            break;</div><div class="line">        case kCFRunLoopBeforeTimers:</div><div class="line">            NSLog(@&quot;run loop before timers&quot;);</div><div class="line">            break;</div><div class="line">        case kCFRunLoopBeforeSources:</div><div class="line">            NSLog(@&quot;run loop before sources&quot;);</div><div class="line">            break;</div><div class="line">        case kCFRunLoopBeforeWaiting:</div><div class="line">            NSLog(@&quot;run loop before waiting\n\n&quot;);</div><div class="line">            break;</div><div class="line">        case kCFRunLoopAfterWaiting:</div><div class="line">            NSLog(@&quot;run loop after waiting&quot;);</div><div class="line">            break;</div><div class="line">        case kCFRunLoopExit:</div><div class="line">            NSLog(@&quot;run loop exit&quot;);</div><div class="line">            break;</div><div class="line">        default:</div><div class="line">            break;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>为了让RunLoop跑起来，我向RunLoop里面添加了一个定时器源，在定时器的回调方法里面打印字符串@”timerAction”。最后控制台打印的信息如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">2017-07-19 17:31:37.359 LearnRunLoop[5133:178281] run loop entry</div><div class="line">2017-07-19 17:31:37.359 LearnRunLoop[5133:178281] run loop before timers</div><div class="line">2017-07-19 17:31:37.360 LearnRunLoop[5133:178281] run loop before sources</div><div class="line">2017-07-19 17:31:37.360 LearnRunLoop[5133:178281] run loop before waiting</div><div class="line"></div><div class="line">2017-07-19 17:31:39.363 LearnRunLoop[5133:178281] run loop after waiting</div><div class="line">2017-07-19 17:31:39.363 LearnRunLoop[5133:178281] timerAction</div><div class="line">2017-07-19 17:31:39.364 LearnRunLoop[5133:178281] run loop before timers</div><div class="line">2017-07-19 17:31:39.364 LearnRunLoop[5133:178281] run loop before sources</div><div class="line">2017-07-19 17:31:39.364 LearnRunLoop[5133:178281] run loop before waiting</div><div class="line"></div><div class="line">2017-07-19 17:31:41.361 LearnRunLoop[5133:178281] run loop after waiting</div><div class="line">2017-07-19 17:31:41.362 LearnRunLoop[5133:178281] timerAction</div><div class="line">......</div></pre></td></tr></table></figure>
-<p>符合官方文档的介绍。</p>
-<h2 id="自定义输入源实验"><a href="#自定义输入源实验" class="headerlink" title="自定义输入源实验"></a>自定义输入源实验</h2><p>用户自定义的输入源又称source0，其可配置三个回调函数。分别在添加输入源到runloop、runloop处理输入源事件、取消输入源的时候执行。</p>
-<p>下面代码在开辟的线程中新建一个自定义的输入源，并且添加到RunLoop中。RunLoopSourceScheduleRoutine、RunLoopSourceCancelRoutine、RunLoopSourcePerformRoutine三个回调函数中简单的打印出各自的函数名。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">NSRunLoop *myRunLoop = [NSRunLoop currentRunLoop];</div><div class="line"></div><div class="line">CFRunLoopSourceContext    context = &#123;0, (__bridge void *)(self), NULL, NULL, NULL, NULL, NULL,</div><div class="line">        &amp;RunLoopSourceScheduleRoutine,</div><div class="line">        &amp;RunLoopSourceCancelRoutine,</div><div class="line">        &amp;RunLoopSourcePerformRoutine&#125;;</div><div class="line">    </div><div class="line">CFRunLoopSourceRef runLoopSource = CFRunLoopSourceCreate(NULL, 0, &amp;context);</div><div class="line">    </div><div class="line">CFRunLoopRef cfRunLoop = CFRunLoopGetCurrent();</div><div class="line">CFRunLoopAddSource(cfRunLoop, runLoopSource, kCFRunLoopDefaultMode);</div><div class="line"></div><div class="line">// 这里保存下来runloop和runloop source，用于后面触发输入源。</div><div class="line">self.asyncRunLoop = cfRunLoop;</div><div class="line">self.asyncRunLoopSource = runLoopSource;</div><div class="line"></div><div class="line">[myRunLoop run];</div></pre></td></tr></table></figure>
-<p>然后，我在界面上添加了一个按钮，按钮的回调方法中执行下面代码，来触发输入源。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">CFRunLoopSourceSignal(self.asyncRunLoopSource);</div><div class="line">CFRunLoopWakeUp(self.asyncRunLoop);</div></pre></td></tr></table></figure>
-<p>点击按钮，打印出的信息为：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">2017-07-19 20:41:10.835 LearnRunLoop[6449:226609] RunLoopSourceScheduleRoutine</div><div class="line">2017-07-19 20:41:10.838 LearnRunLoop[6449:226609] run loop entry</div><div class="line">2017-07-19 20:41:10.838 LearnRunLoop[6449:226609] run loop before timers</div><div class="line">2017-07-19 20:41:10.838 LearnRunLoop[6449:226609] run loop before sources</div><div class="line">2017-07-19 20:41:10.838 LearnRunLoop[6449:226609] run loop before waiting</div><div class="line"></div><div class="line"></div><div class="line">2017-07-19 20:41:19.422 LearnRunLoop[6449:226609] run loop after waiting</div><div class="line">2017-07-19 20:41:19.423 LearnRunLoop[6449:226609] run loop before timers</div><div class="line">2017-07-19 20:41:19.425 LearnRunLoop[6449:226609] run loop before sources</div><div class="line">2017-07-19 20:41:19.426 LearnRunLoop[6449:226609] RunLoopSourcePerformRoutine</div><div class="line">2017-07-19 20:41:19.427 LearnRunLoop[6449:226609] run loop exit</div><div class="line">2017-07-19 20:41:19.428 LearnRunLoop[6449:226609] run loop entry</div><div class="line">2017-07-19 20:41:19.429 LearnRunLoop[6449:226609] run loop before timers</div><div class="line">2017-07-19 20:41:19.429 LearnRunLoop[6449:226609] run loop before sources</div><div class="line">2017-07-19 20:41:19.430 LearnRunLoop[6449:226609] run loop before waiting</div></pre></td></tr></table></figure>
-<p>可以看到，打印出的信息有点奇怪。在执行完source0的回调后，runloop退出然后又重新进来了。根据官方文档提供的流程分析，难道不应该线程休眠吗？</p>
-<p>我又试了另一种执行runLoop的方法，用CFRunLoopRun()。结果发现打印出来的信息又不同了，打印信息如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">2017-07-19 20:56:35.721 LearnRunLoop[6609:236375] run loop after waiting</div><div class="line">2017-07-19 20:56:35.721 LearnRunLoop[6609:236375] run loop before timers</div><div class="line">2017-07-19 20:56:35.722 LearnRunLoop[6609:236375] run loop before sources</div><div class="line">2017-07-19 20:56:35.722 LearnRunLoop[6609:236375] RunLoopSourcePerformRoutine</div><div class="line">2017-07-19 20:56:35.723 LearnRunLoop[6609:236375] run loop before timers</div><div class="line">2017-07-19 20:56:35.723 LearnRunLoop[6609:236375] run loop before sources</div><div class="line">2017-07-19 20:56:35.723 LearnRunLoop[6609:236375] run loop before waiting</div></pre></td></tr></table></figure>
-<p>source0回调之后，还是没有休眠，并且exit和entry也不见了！！！这是怎么回事？这里先不解释，放到后面解释。</p>
-<h2 id="基于端口的源实验"><a href="#基于端口的源实验" class="headerlink" title="基于端口的源实验"></a>基于端口的源实验</h2><p>使用基于端口的源的流程大致是： 在主线程和新线程中新建端口，并添加端口到runloop，然后进行通过端口发送消息，就会自动唤醒接受消息的线程。端口接受消息后，就会触发回调。回调方法是，端口的delegate的<code>- (void)handlePortMessage:(NSPortMessage *)message</code>方法。</p>
-<p>一开始，我使用的是官方文档提供的Cocoa接口，代码如下：</p>
-<p>主线程：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">NSPort* mainThreadPort = [NSMachPort port];</div><div class="line">[mainThreadPort setDelegate:self];</div><div class="line">[[NSRunLoop currentRunLoop] addPort:mainThreadPort forMode:NSDefaultRunLoopMode];</div></pre></td></tr></table></figure>
-<p>新线程</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">NSRunLoop *myRunLoop = [NSRunLoop currentRunLoop];</div><div class="line"></div><div class="line">NSPort* myPort = [NSMachPort port];</div><div class="line">[myPort setDelegate:self];</div><div class="line">[[NSRunLoop currentRunLoop] addPort:myPort forMode:NSDefaultRunLoopMode];</div><div class="line">            </div><div class="line">NSPortMessage *msg = NSPortMessage* messageObj = [[NSPortMessage alloc] initWithSendPort:distantPort receivePort:myPort components:nil];</div><div class="line">    </div><div class="line">if (messageObj)</div><div class="line">&#123;</div><div class="line">    // Finish configuring the message and send it immediately.</div><div class="line">    [messageObj setMsgId:setMsgid:100];</div><div class="line">    [messageObj sendBeforeDate:[NSDate date]];</div><div class="line">&#125;</div><div class="line">             </div><div class="line">[myRunLoop runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];</div><div class="line"></div><div class="line">[myRunLoop run];</div></pre></td></tr></table></figure>
-<p>本来以为会像想象的那样美好，但是编译都编译不了。报错<code>Receiver &#39;NSPortMessage&#39; for class message is a forward declaration</code>，说NSPortMessage只是一个前置声明。然后我点进去，发现果然只有一个NSPort.h里面的@class NSPortMessage;前置声明。然后我在Foundation框架里面并没有找到NSPortMessage.h的文件。然后，网上的靠谱的解释是，NSPortMessage是私有的API，苹果为了iOS的沙盒机制的安全考虑，就没有开放这个API……好吧，还有这种操作，好在OSX上还能用。</p>
-<p>这是stackoverflow上关于NSPortMessage问题的一个<a href="stackoverflow.com/questions/12384210/is-nsportmessage-in-the-ios-api">帖子</a>。</p>
-<p>无奈，只能用CoreFoundation框架的接口。具体的代码我就不贴了。总之，在新线程端口的回调函数里面打印字符串<code>@&quot;received msg&quot;</code>。</p>
-<p>然后，添加一个按钮，点击进行主线程向新线程发送消息。打印的信息是：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">2017-07-19 21:43:22.169 LearnRunLoop[7203:264896] run loop after waiting</div><div class="line">2017-07-19 21:43:22.171 LearnRunLoop[7203:264896] received msg</div><div class="line">2017-07-19 21:43:22.172 LearnRunLoop[7203:264896] run loop exit</div><div class="line">2017-07-19 21:43:22.173 LearnRunLoop[7203:264896] run loop entry</div><div class="line">2017-07-19 21:43:22.173 LearnRunLoop[7203:264896] run loop before timers</div><div class="line">2017-07-19 21:43:22.173 LearnRunLoop[7203:264896] run loop before sources</div><div class="line">2017-07-19 21:43:22.173 LearnRunLoop[7203:264896] run loop before waiting</div></pre></td></tr></table></figure>
-<p>考虑到用的是<code>[myRunLoop run]</code>，换成<code>CFRunLoopRun()</code>后，打印出：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">2017-07-19 21:42:28.623 LearnRunLoop[7170:263942] run loop after waiting</div><div class="line">2017-07-19 21:42:28.623 LearnRunLoop[7170:263942] received msg</div><div class="line">2017-07-19 21:42:28.624 LearnRunLoop[7170:263942] run loop before timers</div><div class="line">2017-07-19 21:42:28.625 LearnRunLoop[7170:263942] run loop before sources</div><div class="line">2017-07-19 21:42:28.625 LearnRunLoop[7170:263942] run loop before waiting</div></pre></td></tr></table></figure>
-<p>打印的信息总算和预期一致了。这个exit和entry先放着，后面解释。</p>
-<h2 id="performSelector-实验"><a href="#performSelector-实验" class="headerlink" title="performSelector 实验"></a>performSelector 实验</h2><p>还是开辟一个新线程，然后存到@property newThread。添加一个按钮，点击按钮执行：<code>[self performSelector:@selector(performMethod) onThread:self.newThread withObject:self waitUntilDone:NO]</code>。<code>performMethod</code>方法中仅打印方法名。</p>
-<p>使用[myRunLoop run]，那么打印出的信息是：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">2017-07-19 21:51:51.479 LearnRunLoop[7290:270543] run loop after waiting</div><div class="line">2017-07-19 21:51:51.480 LearnRunLoop[7290:270543] run loop before timers</div><div class="line">2017-07-19 21:51:51.480 LearnRunLoop[7290:270543] run loop before sources</div><div class="line">2017-07-19 21:51:51.480 LearnRunLoop[7290:270543] performMethod</div><div class="line">2017-07-19 21:51:51.481 LearnRunLoop[7290:270543] run loop exit</div><div class="line">2017-07-19 21:51:51.482 LearnRunLoop[7290:270543] run loop entry</div><div class="line">2017-07-19 21:51:51.482 LearnRunLoop[7290:270543] run loop before timers</div><div class="line">2017-07-19 21:51:51.482 LearnRunLoop[7290:270543] run loop before sources</div><div class="line">2017-07-19 21:51:51.483 LearnRunLoop[7290:270543] run loop before waiting</div></pre></td></tr></table></figure>
-<p>使用CFRunLoopRun()，打印：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">2017-07-19 21:52:57.653 LearnRunLoop[7337:271666] run loop after waiting</div><div class="line">2017-07-19 21:52:57.657 LearnRunLoop[7337:271666] run loop before timers</div><div class="line">2017-07-19 21:52:57.658 LearnRunLoop[7337:271666] run loop before sources</div><div class="line">2017-07-19 21:52:57.658 LearnRunLoop[7337:271666] performMethod</div><div class="line">2017-07-19 21:52:57.658 LearnRunLoop[7337:271666] run loop before timers</div><div class="line">2017-07-19 21:52:57.659 LearnRunLoop[7337:271666] run loop before sources</div><div class="line">2017-07-19 21:52:57.659 LearnRunLoop[7337:271666] run loop before waiting</div></pre></td></tr></table></figure>
-<p>这里我们可以看出，performSelector方法的打印信息和source0的打印信息，基本上是一样的。因此，我怀疑performSelector方法族是不是内部使用source0来和进行通信。</p>
-<p>然后，我试了添加两个source0：source0_a和source0_b，一个的order设为-1，另一个order设为1。通过CFRunLoopRun()启动runloop后，执行下面代码：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">CFRunLoopSourceSignal(source0_a);</div><div class="line">CFRunLoopSourceSignal(source0_b);</div><div class="line">[self performSelector:@selector(performMethod) onThread:self.newThread withObject:self waitUntilDone:NO]</div></pre></td></tr></table></figure>
-<p>打印出来的信息是：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">2017-07-19 22:46:37.032 LearnRunLoop[8446:301743] run loop after waiting</div><div class="line">2017-07-19 22:46:37.032 LearnRunLoop[8446:301743] run loop before timers</div><div class="line">2017-07-19 22:46:37.033 LearnRunLoop[8446:301743] run loop before sources</div><div class="line">2017-07-19 22:46:37.033 LearnRunLoop[8446:301743] RunLoopSourcePerformRoutine </div><div class="line">2017-07-19 22:46:37.033 LearnRunLoop[8446:301743] performMethod</div><div class="line">2017-07-19 22:46:37.034 LearnRunLoop[8446:301743] RunLoopSourceSchedudRoutine</div><div class="line">2017-07-19 22:46:37.034 LearnRunLoop[8446:301743] run loop before timers</div><div class="line">2017-07-19 22:46:37.034 LearnRunLoop[8446:301743] run loop before sources</div><div class="line">2017-07-19 22:46:37.034 LearnRunLoop[8446:301743] run loop before waiting</div></pre></td></tr></table></figure>
-<p>因此，侧面证实了performSelector方法簇是用source0实现的。</p>
-<p>如果，通过Cocoa方法启动runloop后，会发现打印出这样的信息：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">2017-07-19 22:38:31.529 LearnRunLoop[8239:296624] run loop after waiting</div><div class="line">2017-07-19 22:38:31.530 LearnRunLoop[8239:296624] run loop before timers</div><div class="line">2017-07-19 22:38:31.531 LearnRunLoop[8239:296624] run loop before sources</div><div class="line">2017-07-19 22:38:31.531 LearnRunLoop[8239:296624] RunLoopSourceSchedudRoutine</div><div class="line">2017-07-19 22:38:31.531 LearnRunLoop[8239:296624] run loop exit</div><div class="line">2017-07-19 22:38:31.532 LearnRunLoop[8239:296624] run loop entry</div><div class="line">2017-07-19 22:38:31.532 LearnRunLoop[8239:296624] run loop before timers</div><div class="line">2017-07-19 22:38:31.533 LearnRunLoop[8239:296624] run loop before sources</div><div class="line">2017-07-19 22:38:31.534 LearnRunLoop[8239:296624] performMethod</div><div class="line">2017-07-19 22:38:31.534 LearnRunLoop[8239:296624] run loop exit</div><div class="line">2017-07-19 22:38:31.534 LearnRunLoop[8239:296624] run loop entry</div><div class="line">2017-07-19 22:38:31.535 LearnRunLoop[8239:296624] run loop before timers</div><div class="line">2017-07-19 22:38:31.535 LearnRunLoop[8239:296624] run loop before sources</div><div class="line">2017-07-19 22:38:31.535 LearnRunLoop[8239:296624] RunLoopSourceSchedudRoutine</div><div class="line">2017-07-19 22:38:31.535 LearnRunLoop[8239:296624] run loop exit</div><div class="line">2017-07-19 22:38:31.535 LearnRunLoop[8239:296624] run loop entry</div><div class="line">2017-07-19 22:38:31.536 LearnRunLoop[8239:296624] run loop before timers</div><div class="line">2017-07-19 22:38:31.536 LearnRunLoop[8239:296624] run loop before sources</div><div class="line">2017-07-19 22:38:31.536 LearnRunLoop[8239:296624] run loop before waiting</div></pre></td></tr></table></figure>
-<p>这又是为什么呢?</p>
-<h2 id="dispatch实验"><a href="#dispatch实验" class="headerlink" title="dispatch实验"></a>dispatch实验</h2><p>苹果官方文档关于Main dispatch queue有如下说明：</p>
-<blockquote>
-<p>The main dispatch queue is a globally available serial queue that executes tasks on the application’s main thread. This queue works with the application’s run loop (if one is present) to interleave the execution of queued tasks with the execution of other event sources attached to the run loop. Because it runs on your application’s main thread, the main queue is often used as a key synchronization point for an application.</p>
-</blockquote>
-<p>为了搞清楚dispatch的block执行的位置，我们在新线程中，dispatch block到主线程。然后打印如下信息：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">2017-07-19 23:14:43.888 LearnRunLoop[8894:316820] run loop after waiting</div><div class="line">2017-07-19 23:14:43.889 LearnRunLoop[8894:316820] dispatchAction</div><div class="line">2017-07-19 23:14:43.889 LearnRunLoop[8894:316820] run loop before timers</div><div class="line">2017-07-19 23:14:43.889 LearnRunLoop[8894:316820] run loop before sources</div><div class="line">2017-07-19 23:14:43.890 LearnRunLoop[8894:316820] run loop before waiting</div></pre></td></tr></table></figure>
-<p>因此，猜想dispatch的block应该和timer以及source1的执行位置类似。</p>
-<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>在做上述实验的过程中，我们遇到了一些问题，总结一下：</p>
-<ul>
-<li>Cocoa接口和CoreFoundation接口表现不一致<ul>
-<li>Cocoa接口处理完源之后会exit和entry，而CF接口不会</li>
-<li>Cocoa接口每次runloop循环只处理一个source0，CF接口每次runloop循环处理多个source0</li>
-</ul>
-</li>
-<li>处理完source0之后，尽管没有source1，线程还是没有休眠</li>
-</ul>
-<h1 id="RunLoop源码分析"><a href="#RunLoop源码分析" class="headerlink" title="RunLoop源码分析"></a>RunLoop源码分析</h1><p>好在CoreFoundation是开源的，可以到这里下载源码<a href="http://opensource.apple.com/tarballs/CF/" target="_blank" rel="external">http://opensource.apple.com/tarballs/CF/</a>。带着上面的问题，我阅读了RunLoop的源码，然后把RunLoop相关函数的源码保留核心步骤整理如下。</p>
-<h2 id="CFRunLoopRun-amp-CFRunLoopRunInMode"><a href="#CFRunLoopRun-amp-CFRunLoopRunInMode" class="headerlink" title="CFRunLoopRun &amp; CFRunLoopRunInMode"></a>CFRunLoopRun &amp; CFRunLoopRunInMode</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">void CFRunLoopRun(void) &#123;</div><div class="line">    int32_t result;</div><div class="line">    do &#123;</div><div class="line">        result = CFRunLoopRunSpecific(CFRunLoopGetCurrent(), kCFRunLoopDefaultMode, 1.0e10, false);</div><div class="line">    &#125; while (kCFRunLoopRunStopped != result &amp;&amp; kCFRunLoopRunFinished != result);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">SInt32 CFRunLoopRunInMode(CFStringRef modeName, CFTimeInterval seconds, Boolean returnAfterSourceHandled) &#123;     </div><div class="line">    return CFRunLoopRunSpecific(CFRunLoopGetCurrent(), modeName, seconds, returnAfterSourceHandled);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>CFRunLoopRun()是对CFRunLoopRunSpecific()简单封装。kCFRunLoopRunStopped和kCFRunLoopRunFinished代表的意义我们可以从看出来CFRunLoopRun()的官方文档推测出来。</p>
-<blockquote>
-<p>The current thread’s run loop runs in the default mode until the run loop is stopped with CFRunLoopStop or all the sources and timers are removed from the default run loop mode.</p>
-</blockquote>
-<h2 id="CFRunLoopRunSpecific"><a href="#CFRunLoopRunSpecific" class="headerlink" title="CFRunLoopRunSpecific"></a>CFRunLoopRunSpecific</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">SInt32 CFRunLoopRunSpecific(CFRunLoopRef rl, CFStringRef modeName, CFTimeInterval seconds, Boolean returnAfterSourceHandled) &#123;</div><div class="line"></div><div class="line">	__CFRunLoopDoObservers(rl, currentMode, kCFRunLoopEntry);</div><div class="line">	result = __CFRunLoopRun(rl, currentMode, seconds, returnAfterSourceHandled, previousMode);</div><div class="line">	__CFRunLoopDoObservers(rl, currentMode, kCFRunLoopExit);</div><div class="line"></div><div class="line">   return result;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>CFRunLoopRunSpecific虽然没有__前缀，但是还是一个私有的API。其几个参数的含义如下：</p>
-<ul>
-<li>CFRunLoopRef rl </li>
-<li>CFStringRef modeName ：mode的名字</li>
-<li>CFTimeInterval seconds ： RunLoop的运行时间，超时后就退出RunLoop</li>
-<li>Boolean returnAfterSourceHandled：YES表示RunLoop处理完一次source之后就exit；NO表示不exit，直到运行时间到才exit</li>
-</ul>
-<p>因为，CFRunLoopRun()调用CFRunLoopRunSpecific时，returnAfterSourceHandled是false，所以在处理完一次source之后不会退出。</p>
-<p>那对应的Cocoa方法呢？</p>
-<p>NSRunLoop的run方法实际上是循环调用runMode:beforeDate:方法，这个在官方文档有说明。</p>
-<blockquote>
-<p>it runs the receiver in the NSDefaultRunLoopMode by repeatedly invoking<br>runMode:beforeDate:</p>
-</blockquote>
-<p>而runMode:beforeDate:方法在处理了一次source之后会立即返回，下面是官方文档对其返回值的说明：</p>
-<blockquote>
-<p>YES if the run loop ran and processed an input source or if the specified timeout value was reached; otherwise, NO if the run loop could not be started.</p>
-</blockquote>
-<p>其实在RunLoop的官方编程指南上也有提到：</p>
-<blockquote>
-<p>The input sources deliver asynchronous events to the corresponding handlers and cause the runUntilDate: method (called on the thread’s associated NSRunLoop object) to exit. Timer sources deliver events to their handler routines but do not cause the run loop to exit.</p>
-</blockquote>
-<p>所以，NSRunLoop的run方法处理了一次source之后，会退出runloop，然后又重新进入runloop。我们上面的现象也就解释清楚了。</p>
-<p>剩下的问题：</p>
-<ul>
-<li>为什么处理完source0后不会立即休眠？</li>
-<li>performSelector函数簇是不是真的通过source0实现的？</li>
-<li>dispatch的主线程的block是在哪执行的？</li>
-</ul>
-<p>下面通过源码来解决这些问题。</p>
-<h2 id="CFRunLoopRun"><a href="#CFRunLoopRun" class="headerlink" title="__CFRunLoopRun"></a>__CFRunLoopRun</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div></pre></td><td class="code"><pre><div class="line">static int32_t __CFRunLoopRun(CFRunLoopRef rl, CFRunLoopModeRef rlm, CFTimeInterval seconds, Boolean stopAfterHandle, CFRunLoopModeRef previousMode) &#123;</div><div class="line">	</div><div class="line">	if( RunLoop被停止 )&#123;</div><div class="line">		return kCFRunLoopRunStopped;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	retVal = 0;</div><div class="line">	didDispatchPortLastTime = true;</div><div class="line">	</div><div class="line">	do&#123;</div><div class="line">        __CFRunLoopDoObservers(rl, rlm, kCFRunLoopBeforeTimers);</div><div class="line">        __CFRunLoopDoObservers(rl, rlm, kCFRunLoopBeforeSources);</div><div class="line">		  	</div><div class="line">        // 处理CFRunLoopPerformBlock()添加到runloop中的block</div><div class="line">        __CFRunLoopDoBlocks(rl, rlm);</div><div class="line">        	</div><div class="line">        Boolean sourceHandledThisLoop = __CFRunLoopDoSources0(rl, rlm, stopAfterHandle);</div><div class="line"></div><div class="line">        // sourceHandledThisLoop 值为true，代表着存在并处理了source0，否则为false</div><div class="line">        if (sourceHandledThisLoop) &#123;</div><div class="line">            __CFRunLoopDoBlocks(rl, rlm);</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        // poll 为true代表着不进行休眠，false反之</div><div class="line">        Boolean poll = sourceHandledThisLoop || seconds &lt;= 0.0; </div><div class="line">         </div><div class="line">        // 如果该线程是主线程的话，在这里检测是否有dispatch到本线程的block</div><div class="line">        if ( 当前线程是主线程 &amp;&amp; !didDispatchPortLastTime) &#123;</div><div class="line">            //__CFRunLoopServiceMachPort用于接受指定端口的消息,最后一个参数代表当端口无消息的时候是否休眠,0是立刻返回不休眠,TIMEOUT_INFINITY代表休眠</div><div class="line">            if (__CFRunLoopServiceMachPort(dispatchPort, &amp;msg, sizeof(msg_buffer), &amp;livePort, 0)) &#123;</div><div class="line">            	// 检测到的话，立刻跳转去处理</div><div class="line">               goto handle_msg;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        didDispatchPortLastTime = false;</div><div class="line"></div><div class="line">        if (!poll) __CFRunLoopDoObservers(rl, rlm, kCFRunLoopBeforeWaiting);</div><div class="line"></div><div class="line">        __CFRunLoopServiceMachPort(waitSet, &amp;msg, sizeof(msg_buffer), &amp;livePort, poll ? 0 : TIMEOUT_INFINITY);</div><div class="line"></div><div class="line">        if (!poll ) __CFRunLoopDoObservers(rl, rlm, kCFRunLoopAfterWaiting);</div><div class="line">        </div><div class="line">        handle_msg:;</div><div class="line"></div><div class="line">        if( 被显式唤醒 )&#123;</div><div class="line">        	// 啥都不做</div><div class="line">        &#125;</div><div class="line">        else if( 被timer唤醒 )&#123;</div><div class="line">        	__CFRunLoopDoTimers();</div><div class="line">        &#125;</div><div class="line">        else if( 被GCD唤醒 )&#123;</div><div class="line">            __CFRUNLOOP_IS_SERVICING_THE_MAIN_DISPATCH_QUEUE__();</div><div class="line">            sourceHandledThisLoop = true;</div><div class="line">        &#125;</div><div class="line">        else&#123;</div><div class="line">        	sourceHandledThisLoop = __CFRunLoopDoSource1() || sourceHandledThisLoop;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        __CFRunLoopDoBlocks(rl, rlm);</div><div class="line"></div><div class="line">        if (sourceHandledThisLoop &amp;&amp; stopAfterHandle) &#123;</div><div class="line">        	retVal = kCFRunLoopRunHandledSource;</div><div class="line">        &#125; else if ( runloop超时时间到 ) &#123;</div><div class="line">        	retVal = kCFRunLoopRunTimedOut;</div><div class="line">        &#125; else if ( runloop被停止 ) &#123;</div><div class="line">    		retVal = kCFRunLoopRunStopped;</div><div class="line">        &#125; else if ( RunLoopMode里面为空 ) &#123;</div><div class="line">           	retVal = kCFRunLoopRunFinished;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">	&#125;while( retVal == 0 );</div><div class="line">		</div><div class="line">    return retVal;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>因此，上面的未解决的问题也有了答案。</p>
-<ul>
-<li>在执行了一次source0之后，因为poll为true，所以线程不进行休眠。 </li>
-<li>根据源码，以及我们上面做的实验，performSelector确实被当做source0处理的。</li>
-<li>dispatch的主线程的block是在线程唤醒后立即执行的。</li>
-</ul>
-<p>源码中还有<code>__CFRunLoopDoBlocks</code>函数。此函数执行的block是<code>CFRunLoopPerformBlock</code>函数添加到RunLoop中的block，<code>CFRunLoopPerformBlock</code>函数不会唤醒线程。</p>
-<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
-<li><a href="http://developer.apple.com/library/content/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html#//apple_ref/doc/uid/10000057i-CH16-SW1" target="_blank" rel="external">Threading Programming Guide</a></li>
-<li><a href="http://blog.ibireme.com/2015/05/18/runloop/" target="_blank" rel="external">深入理解RunLoop</a></li>
-<li><a href="http://zhuanlan.zhihu.com/p/27650660" target="_blank" rel="external">Run Loop 记录与源码注释</a></li>
-<li><a href="http://v.youku.com/v_show/id_XODgxODkzODI0.html" target="_blank" rel="external">iOS线下分享《RunLoop》by 孙源@sunnyxx</a></li>
-</ul>
-
-          
+          最近在学iOS系统的RunLoop的知识，官方文档写的比较详细，但是一些细节并没有涉及到，而且网上其他的关于RunLoop的文章鱼龙混杂、良莠不齐，在这里，我推荐一下这一篇博客《深入理解RunLoop》。这篇博客对于RunLoop的源码进行了一定的分析，讲得很详细。在这里，自己把学习过程中遇到的一些
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/07/19/RunLoop/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -639,79 +485,15 @@
       
         
           
-            <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>最近正在读 《iOS-Core-Animation-Advanced-Techniques》 这本书，先读的github上的<a href="https://github.com/AttackOnDobby/iOS-Core-Animation-Advanced-Techniques" target="_blank" rel="external">翻译版</a>，在图层时间这一章中，它讲的并不是很清楚，很多地方给我很多困惑。然后自己做了一些实验，再加上参考了stackoverflow上的一些回答之后，整理了图层时间的一些知识，如有错误还请指出。</p>
-<h1 id="CoreAnimation的计时机制"><a href="#CoreAnimation的计时机制" class="headerlink" title="CoreAnimation的计时机制"></a>CoreAnimation的计时机制</h1><p>时间对于动画是十分重要的。单一动画有自己的持续时间，多个动画的执行有时间上的先后顺序。动画的行为需要按时间来进行组织和串联，也就是动画的执行需要一个时间来参照，这就需要动画有自己的计时机制。CoreAnimation确实提供一种计时的机制，来控制和追踪动画的时间。这种机制就是CAAnimation定义的CAMediaTiming协议。</p>
-<p>CALayer和CAAnimation都实现了该协议。因为，CAAnimation需要参照时间执行动画，CALayer也需要参照时间来组织添加到其及其子CALayer上的动画。通过该协议CALayer和CAAnimation都可以控制动画的时间上的行为。不过，该协议的一些属性在CALayer上的表现效果和CAAnimation上的表现效果具有明显差异，具体下面会讲，这也是我写这篇博客的原因。</p>
-<p>在讲CAMediaTiming协议之前，先讲一下动画参照时间的层级关系和动画的层级关系。</p>
-<h2 id="动画参照时间的层级关系"><a href="#动画参照时间的层级关系" class="headerlink" title="动画参照时间的层级关系"></a>动画参照时间的层级关系</h2><p>CALayer实现了CAMediaTiming协议。CALayer会有自己的动画参照时间，添加到CALayer上的动画都是按照该动画参照时间来组织的。</p>
-<p>CALayer是有层级关系的，CALayer是按照树形结构来进行组织的。因为动画都是添加到CALayer上的，所以动画时间也有层级关系。层级关系体现在下面几点：</p>
-<ul>
-<li>动画执行所直接参照的时间并不是一个全局的时间，而是每个CALayer有自己的参照时间，并且同一个CALayer上的所有动画参照同一个时间</li>
-<li>本CACALayer的参照时间，来源于其父CALayer的参照时间，具体的时间转换公式下面会讲到</li>
-<li>所有的CALayer的参照时间，都是由 <em>马赫时间</em> 通过一层层的转换得到的，<em>马赫时间</em> 就是动画所参照的一个全局时间（或者说根时间，我自己这么称呼…），这也是所有的动画能够同步到一起的根本原因</li>
-</ul>
-<p>马赫时间可以通过下面的函数得到：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">CFTimeInterval time = CACurrentMediaTime();</div></pre></td></tr></table></figure>
-<p>不同CALayer的动画参照时间可以通过下面的方法来转换：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">- (CFTimeInterval)convertTime:(CFTimeInterval)t fromLayer:(CALayer *)l;</div><div class="line">- (CFTimeInterval)convertTime:(CFTimeInterval)t toLayer:(CALayer *)l;</div></pre></td></tr></table></figure>
-<h2 id="动画的层级关系"><a href="#动画的层级关系" class="headerlink" title="动画的层级关系"></a>动画的层级关系</h2><p>动画所添加到的CALayer具有层级关系，动画也存在着层级关系，但是动画的层级关系仅仅体现在CAAnimationGroup。</p>
-<p>比如说，一个CAAnimationGroup有两个动画，其中一个是平移动画，其余一个是旋转动画。这就是一个两层关系的动画组。控制动画组中各个动画在时间上的行为也需要CAMediaTiming协议。</p>
-<h1 id="CAMediaTiming-Protocol"><a href="#CAMediaTiming-Protocol" class="headerlink" title="CAMediaTiming Protocol"></a>CAMediaTiming Protocol</h1><p>该协议定义了一个属性集，包括这些属性：duration、speed、beginTime、timeOffset、fillMode等。由于CAAnimation和CALayer都实现了该协议，并且这些属性在这两种对象上的表现效果不同，所以我分开来讲。</p>
-<h2 id="CAAnimation的实现"><a href="#CAAnimation的实现" class="headerlink" title="CAAnimation的实现"></a>CAAnimation的实现</h2><h3 id="duration"><a href="#duration" class="headerlink" title="duration"></a>duration</h3><p>该属性定义了动画执行的时间，单位是s，简单明了。</p>
-<h3 id="speed"><a href="#speed" class="headerlink" title="speed"></a>speed</h3><p>speed控制时间的流速，默认是1.0。如果变为2.0，意味着原来2s的动画1s就能完成。</p>
-<h3 id="beginTime"><a href="#beginTime" class="headerlink" title="beginTime"></a>beginTime</h3><p>beginTime表示动画在添加到图层时和开始执行时之间的时间，默认是0。如果赋值为1的话，意味着在 addAnimation:forKey:执行之后，动画不会立即执行，会等待1s再开始执行。这也是通俗易懂的。</p>
-<p>但是，这里又分两种情况：</p>
-<h4 id="情况一"><a href="#情况一" class="headerlink" title="情况一"></a>情况一</h4><p>要配置的动画在CAAnimationGroup中话，那么beginTime的效果就像我们上面说的一样。若设置为1的话，就是相对于动画组开始的时刻晚1s再开始该动画。</p>
-<p>例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">CABasicAnimation *anim1 = ...;</div><div class="line">anim1.duration = 2;</div><div class="line">anim1.beginTime = 1;</div><div class="line">...</div><div class="line"></div><div class="line">CABasicAnimation *anim2 = ...;</div><div class="line">...</div><div class="line"></div><div class="line">CAAnimationGroup *animGroup = ...;</div><div class="line">animGroup.duration = 3;</div><div class="line">animGroup.animations = @[anim1, anim2];</div><div class="line"></div><div class="line">[layer addAnimation:animGroup forKey:nil];</div></pre></td></tr></table></figure>
-<p>上述动画的效果是：layer先开始执行动画二，1s后动画一开始执行，然后动画一和二同时执行2s后结束。</p>
-<h4 id="情况二"><a href="#情况二" class="headerlink" title="情况二"></a>情况二</h4><p>要配置的动画被直接添加到CALayer中的话，那么beginTime的效使用和效果会和上面介绍的不同。</p>
-<p>例如情况一的代码中，animGroup被直接添加到layer，如果添加下面一句：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">animGroup.beginTime = 1;</div></pre></td></tr></table></figure>
-<p>这并不代表着该动画组会在1s后开始执行，相反动画永远不会开始执行。因为，对于直接添加到layer的CAAnimation，beginTime属性表示动画开始执行的时刻，并不是执行之前的等待的时间。这里的动画开始执行的时刻是以layer的本地时间为参考的。</p>
-<p>如果想让上述的动画组在1s后开始执行，那么就需要这样设置beginTime：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">...</div><div class="line">animGroup.beginTime = [layer convertTime:CACurrentMediaTime() fromLayer:nil] + 1;</div><div class="line">[layer addAnimation:animGroup forKey:nil];</div></pre></td></tr></table></figure>
-<p>这句代码的含义是，先根据马赫时间得到当前的layer的动画参考时间，再把动画组开始执行的时刻设置为‘当前时间’的下一秒。需要注意的是，设置完动画组的beginTime后，需要立刻把动画组添加到layer中，这样才能保证‘动画添加到layer中的时间’是‘当前时间’，才能保证恰好在1s后开始执行动画。</p>
-<p>但是beginTime的默认值是0，这并不意味着在layer本地时间中的0时刻开始动画，这表示当动画添加到layer中后立即开始执行。这很奇怪，但是事实却是如此。</p>
-<h3 id="timeOffset"><a href="#timeOffset" class="headerlink" title="timeOffset"></a>timeOffset</h3><p>timeOffset默认是0，表示动画开始执行时的时间偏移，也就是动画从timeOffset秒的状态开始执行，然而执行的时间不变。因为执行的时间不变所以动画执行到尾后会再从头开始，直到执行满duration。具体用个例子说明：</p>
-<p>对于一个2s的动画，如果timeOffset赋值为1的话，表示该动画从1s的状态开始执行，执行两秒，超出的时间会循环执行。比如该动画是2s内把layer从（0，0）向右平移100到（0，100）。那么timeOffset赋1后，实际的效果是layer突然从（0，0）变到（0，50），然后花1s向右平移到（0，100），再突然变到（0，0），然后花1s向右平移到（0，50），最后变到（0，0）。</p>
-<p>如果timeOffset和speed混合使用的话，speed不会影响timeOffset的使用。例如还是上面的2s的平移动画，speed是2，timeOffset是1，那么实际的效果不是从（0，100）开始执行；而是还从（0，50）开始执行，只不过运行速度变为原来的两倍。</p>
-<p>timeOffset不像上面的beginTime一样分两种情况，只有一种含义和效果。</p>
-<h3 id="fillMode"><a href="#fillMode" class="headerlink" title="fillMode"></a>fillMode</h3><p>fillMode具体从网上搜吧，没有什么好讲的。</p>
-<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><p>这些属性的配置都是在动画添加到图层之前，也就是说：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">1. CAAnimation *anim = ...;</div><div class="line">2. anim.blabla = ...;</div><div class="line">3. [layer addAnimation:anim forKey:nil];</div></pre></td></tr></table></figure>
-<p>在CAAnimation添加到图层之后，再去改变这些属性是没有用的，即使用property存下来了这些CAAnimation。因为添加到图层的是CAAnimation的readOnly的深拷贝。</p>
-<p>例如，我试图在 - (void)animationDidStart:(CAAnimation *)anim方法中改变动画的duration属性，就报出如下错误。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">*** Terminating app due to uncaught exception &apos;CAAnimationImmutable&apos;, reason: &apos;attempting to modify read-only animation &lt;CAAnimationGroup: 0x608000228760&gt;&apos;</div></pre></td></tr></table></figure>
-<h2 id="CALayer的实现"><a href="#CALayer的实现" class="headerlink" title="CALayer的实现"></a>CALayer的实现</h2><h3 id="duration-1"><a href="#duration-1" class="headerlink" title="duration"></a>duration</h3><p>对CALayer来讲，该属性没有任何意义，对该属性赋值不能控制该CALayer上动画的执行时间，相反会导致不可预期的错误。所以一般我们不用该属性。</p>
-<h3 id="speed-1"><a href="#speed-1" class="headerlink" title="speed"></a>speed</h3><p>该属性对CALayer和CAAnimation没有区别。如果CAAnimation的speed是2，其所添加到CALayer的speed是2。那么时间的流速会变为4倍，也就是原来4s的动画1s就能完成。</p>
-<h3 id="beginTime-1"><a href="#beginTime-1" class="headerlink" title="beginTime"></a>beginTime</h3><p>CALayer的beginTime默认为0，是用来控制layer的本地动画参照时间的。</p>
-<p>每一个layer的动画参照时间都是由其父layer的动画参照时间转换来的。从CAMediaTiming.h中可以找到转换公式： t = (tp - beginTime) * speed + timeOffset，其中tp是父layer的时间，t是本layer的时间。因此，更改beginTime会导致layer的时间变化。例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">NSLog(@&quot;before: %f&quot;,[layer convertTime:CACurrentMediaTime() fromLayer:nil]);</div><div class="line">layer.beginTime = 5;</div><div class="line">NSLog(@&quot;after: %f&quot;,[layer convertTime:CACurrentMediaTime() fromLayer:nil]);</div></pre></td></tr></table></figure>
-<p>执行上述代码，打印出的信息是：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">2017-07-12 11:29:20.765 Test[2261:73200] before: 8479.008420</div><div class="line">2017-07-12 11:29:20.766 Test[2261:73200] after: 8474.008894</div></pre></td></tr></table></figure>
-<p>由此可见，更改beginTime使得layer的参照时间减少了5s，这和公式是符合的。<br>如果设置beginTime = 5， speed = 2，那么打印结果如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">2017-07-12 11:32:20.747 Test[2312:76112] before: 8658.993300</div><div class="line">2017-07-12 11:32:20.747 Test[2312:76112] after: 17307.987721</div></pre></td></tr></table></figure>
-<p>这也是符合预期的。</p>
-<p>利用上面介绍的原理，可以通过设置beginTime来更改layer的本地时间，从而达到让layer上的动画等待几秒再开始的效果。具体的做法如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">CFTimeInterval curTime = [self.testLayer convertTime:CACurrentMediaTime() fromLayer:nil];</div><div class="line">layer.beginTime = 2;</div><div class="line">anim.beginTime = curTime;</div><div class="line">[layer addAnimation:anim forKey:nil];</div></pre></td></tr></table></figure>
-<p><code>anim.beginTime = curTime;</code>这句话是必要的。如果没有这句话的话，那么对layer.beginTime的更改会毫无意义。因为anim.beginTime是0的话，anim总会立刻执行。这里我推测，anim.beginTime为0的话，动画的beginTime属性会在addAnimation:forKey:之后，被自动设置为添加动画后的那个时刻执行；如果anim.beginTime不为0，那么动画会被设置为当本地时间计时到beginTime的时候才执行。因此，上面的代码先设置了动画的执行时刻，然后通过设置layer.beginTime把本地时间减少2s，这样就实现了2s后动画才执行的效果。</p>
-<p>然后，为了证实上面的推测，我设置了一个beginTime是默认的动画，然后在动画的回调方法里面打印出beginTime。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">- (void)animationDidStart:(CAAnimation *)anim&#123;</div><div class="line">    NSLog(@&quot;anim.beginTime %f&quot;, anim.beginTime);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>结果发现，打印出的结果不是0，而是一个值是几千的浮点数。然后我在<code>[layer addAnimation:anim forKey:nil];</code>后，打印出layer本地时间。发现这两个值基本相同。这就说明即使默认beginTime，系统也会给beginTime赋一个合适的值，触发动画也是通过layer的本地时间和beginTime的值比较进行的。</p>
-<h3 id="timeOffset-1"><a href="#timeOffset-1" class="headerlink" title="timeOffset"></a>timeOffset</h3><p>CALayer的timeOffset默认为0，这个属性在上一小节介绍的公式中有提到。通常这个属性也用来改变layer的本地时间，和CAAnimation的timeOffset没有关系。</p>
-<p>在这里我做了小小的测试：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">CFTimeInterval curTime = [self.testLayer convertTime:CACurrentMediaTime() fromLayer:nil];</div><div class="line">layer.beginTime = 2;</div><div class="line">layer.timeOffset = 2;</div><div class="line">anim.beginTime = curTime;</div><div class="line">[layer addAnimation:anim forKey:nil];</div></pre></td></tr></table></figure>
-<p>动画的效果是立即执行，符合由公式推测出的结果。</p>
-<h3 id="注意事项-1"><a href="#注意事项-1" class="headerlink" title="注意事项"></a>注意事项</h3><p>需要注意的是，在使用beginTime、speed、timeOffset改变layer的本地时间的时候，需要考虑layer上动画beginTime是默认值还是自定义的值。如果是默认值，那么动画不受影响；如果是自定义的值的话，那就要考虑改变本地时间对动画造成的影响。</p>
-<h1 id="CAMediaTiming的应用"><a href="#CAMediaTiming的应用" class="headerlink" title="CAMediaTiming的应用"></a>CAMediaTiming的应用</h1><p>使用CAMediaTiming协议可以实现一些好用的功能，这里介绍两个常用的功能。</p>
-<h2 id="手势控制动画进度"><a href="#手势控制动画进度" class="headerlink" title="手势控制动画进度"></a>手势控制动画进度</h2><p>因为我们可以通过beginTime、speed、timeOffset改变layer的本地时间，所以我们可以通过把layer的speed设置为0，然后通过timeOffset属性来控制layer本地时间的计时。这样就可以随心控制layer上的动画的进度。如果我们把timeOffset的值和手势识别器关联起来，那么就能实现手势控制动画进度的效果。</p>
-<p>下面我实现了一个左右拖动控制平移动画进度的效果。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line">- (void)viewDidLoad &#123;</div><div class="line">    [super viewDidLoad];</div><div class="line">    // Do any additional setup after loading the view, typically from a nib.</div><div class="line">    self.testLayer = [CALayer layer];</div><div class="line">    self.testLayer.frame = CGRectMake(10, 20, 30, 30);</div><div class="line">    self.testLayer.backgroundColor = [UIColor redColor].CGColor;</div><div class="line">    [self.view.layer addSublayer:self.testLayer];</div><div class="line">    </div><div class="line">    CABasicAnimation *anim = [CABasicAnimation animation];</div><div class="line">    anim.keyPath = @&quot;transform.translation.x&quot;;</div><div class="line">    anim.byValue = @300;</div><div class="line">    anim.duration = 3;</div><div class="line">    </div><div class="line">    NSLog(@&quot;before %f&quot;, [self.testLayer convertTime:CACurrentMediaTime() fromLayer:nil]);</div><div class="line">    self.testLayer.speed = 0; // interesting</div><div class="line">    NSLog(@&quot;after %f&quot;, [self.testLayer convertTime:CACurrentMediaTime() fromLayer:nil]);</div><div class="line">    [self.testLayer addAnimation:anim forKey:nil];</div><div class="line">    </div><div class="line">    UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(pan:)];</div><div class="line">    [self.view addGestureRecognizer:pan];</div><div class="line">&#125;</div><div class="line"></div><div class="line">- (void)pan:(UIPanGestureRecognizer *)pan</div><div class="line">&#123;</div><div class="line">    //get horizontal component of pan gesture</div><div class="line">    CGFloat x = [pan translationInView:self.view].x;</div><div class="line">    //convert from points to animation duration //using a reasonable scale factor</div><div class="line">    x /= 300.0f;</div><div class="line">    x *= 3;</div><div class="line">    //update timeOffset and clamp result</div><div class="line">    CFTimeInterval timeOffset = self.testLayer.timeOffset;</div><div class="line">    timeOffset = MIN(2.999, MAX(0.0, timeOffset + x));</div><div class="line">    NSLog(@&quot;old timeOffset %f , new timeOffset %f, x %f&quot;, self.testLayer.timeOffset, timeOffset, x);</div><div class="line">    self.testLayer.timeOffset = timeOffset;</div><div class="line">    //reset pan gesture</div><div class="line">    [pan setTranslation:CGPointZero inView:self.view];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>有意思的一点是，无论<code>self.testLayer.speed = 0;</code>在<code>`[self.testLayer addAnimation:anim forKey:nil];</code>之前执行还是之后执行，上面的代码都有效。这也意味着，如果anim的beginTime是默认，anim的beginTime实际赋值并不是刚好在anim被添加到layer时。经过测试，anim的赋值是在viewDidLoad之后。我把添加动画的代码通过按钮触发，经过测试，anim的beginTime赋值是在按钮的IBAction执行之后。</p>
-<h2 id="暂停与继续动画"><a href="#暂停与继续动画" class="headerlink" title="暂停与继续动画"></a>暂停与继续动画</h2><p>动画的暂停与继续的原理也是控制layer的本地时间。具体的做法参考<a href="https://stackoverflow.com/questions/20946481/comprehend-pause-and-resume-animation-on-a-layer" target="_blank" rel="external">这篇帖子</a>，讲的很详细，我就不再废话了。</p>
-
-          
+          前言最近正在读 《iOS-Core-Animation-Advanced-Techniques》 这本书，先读的github上的翻译版，在图层时间这一章中，它讲的并不是很清楚，很多地方给我很多困惑。然后自己做了一些实验，再加上参考了stackoverflow上的一些回答之后，整理了图层时间的一些知识
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/07/12/CAMediaTiming协议/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -840,54 +622,22 @@
       
         
           
-            <h1 id="渲染分类"><a href="#渲染分类" class="headerlink" title="渲染分类"></a>渲染分类</h1><p>OpenGL的概念中，GPU渲染的目的地有两种：</p>
-<ul>
-<li><p>On-Screen Rendering (当前屏幕渲染)<br>指的是GPU的渲染操作是在当前用于显示的屏幕缓冲区进行。</p>
-</li>
-<li><p>Off-Screen Rendering (离屏渲染)<br>指的是在GPU在当前屏幕缓冲区以外开辟一个缓冲区进行渲染操作。</p>
-</li>
-</ul>
-<p>区分渲染操作是离屏渲染还是当前屏幕渲染的标准，就是看渲染的目标缓冲区。如果，是GPU直接把结果渲染到屏幕的缓冲区中，那么就是当前屏幕渲染，否则就是离屏渲染。</p>
-<h1 id="离屏渲染"><a href="#离屏渲染" class="headerlink" title="离屏渲染"></a>离屏渲染</h1><p>离屏渲染是一个通用的术语，它和GPU渲染和CPU渲染没有任何关系。离屏渲染发生在当一个特殊的视觉效果不能直接被绘制到屏幕中去的时候。此时，就需要在屏幕外缓冲区进行预先绘制和处理。会导致离屏渲染的视觉效果包括：</p>
-<ul>
-<li>圆角（rounded corners）</li>
-<li>遮罩（layer masks）</li>
-<li>阴影（drop shadows）</li>
-<li>光栅化（layer rasterize）</li>
-</ul>
-<p>这四种效果都会使Core Animation把layer在屏幕外预先绘制。这四种效果引自《iOS Core Animation Advance Techniques》，经过测试，这四种操作确实会导致离屏渲染。</p>
-<p>一些博客说其他的操作也会导致离屏渲染，比如重写drawRect:方法，使用Text Layer等。在这里，我要强调这些虽然也能称得上是离屏渲染，并不是严格意义上的离屏渲染。究竟这些操作导致的渲染是怎么回事，我在下几个小节会讲到。在此之前，只需要牢牢记住只有上述的四种操作会导致离屏渲染。</p>
-<p>进行离屏渲染会使GPU渲染速度变慢，严重的会导致掉帧，也就是我们说的卡顿。离屏渲染的代价体现在两个方面：</p>
-<ol>
-<li><p>创建新的缓冲区<br>离屏渲染的缓冲区是额外创建的</p>
-</li>
-<li><p>上下文之间的切换<br>离屏渲染的整个过程，需要多次切换上下文。当离屏渲染时，需要把上下文从On-Screen切换到Off-Screen，然后等离屏渲染结束后，再把上下文切换到On-Screen，把离屏渲染的结果显示到设备屏幕上。上下文的切换的代价很大。</p>
-</li>
-</ol>
-<h1 id="光栅化"><a href="#光栅化" class="headerlink" title="光栅化"></a>光栅化</h1><p>在上述导致离屏渲染的四种操作中，前三种都通俗易懂，现在介绍光栅化（Rasterize）。</p>
-<p>光栅化是OpenGL渲染过程中的一个概念，指的是把顶点数据转换为片元的过程，也就是矢量图形转化为像素点的过程。</p>
-<p>CALayer有一个shouldRasterize的属性，该属性是一个BOOL值，默认是NO。对于正常屏幕渲染的CALayer，把其设为YES，会使其自从正常屏幕渲染变为离屏渲染。其内部原理是，CALayer的内容不再被直接渲染到屏幕上，反而是在离屏缓冲区中被渲染成一个位图（bitmap），然后再把位图显示在屏幕上。该位图会被缓存起来，如果CALayer的内容没有改变，那么在以后需要显示该CALayer的内容时，不会重新从头渲染CALayer的内容，而是直接使用之前缓存的位图。从而就节省了一次次光栅化的开销，但是在第一次被初始化成位图的时候会耗费较多时间，并且会消耗额外的内存来保存位图。如果CLayer的内容变化的话，还是会重新开始渲染，并且之前位图会被舍弃并产生新的位图，这会导致更大的开销。系统所分配的用于保存光栅化位图的内存空间也是有限的，大约是2.5 x ScreenSize。</p>
-<p>因此是否设置该属性，需要权衡内存、layer内容是否变化、视图的大小等等。一般来讲，对于有很多subLayer的或者是有很多特殊效果的静态layer，设置shouldRasterize为YES是最合适的选择。</p>
-<h1 id="离屏渲染的检测"><a href="#离屏渲染的检测" class="headerlink" title="离屏渲染的检测"></a>离屏渲染的检测</h1><p>离屏渲染是可以检测的，可以通过Xcode的Instruments-&gt;Core Animation工具来查看离屏渲染的相关事项。使用该工具需要真机调试。</p>
-<p>Color Offscreen-Rendered Yellow选项，勾选该选项来查看离屏渲染的区域，然后会发现屏幕上使用了离屏渲染的区域都是黄色的。</p>
-<p>Color Hits Green and Misses Red选项，勾选这个选项，那么设置shouldRasterize为YES的区域会被颜色覆盖。红色代表没有复用离屏渲染的缓存，也就是说缓存被重复创建，绿色则表示复用了缓存。</p>
-<h1 id="CPU渲染"><a href="#CPU渲染" class="headerlink" title="CPU渲染"></a>CPU渲染</h1><p>在查阅资料的过程中，很多博客对离屏渲染的概念解释不清，还有一部分博客把CPU渲染（软件渲染）归为离屏渲染的类别，这给我带来了很大的困惑。在这里，我先解释一下什么是CPU渲染，然后再解释为什么会有人认为CPU渲染也属于离屏渲染，最后解释下严格意义上的离屏渲染的概念。</p>
-<p>iOS中渲染的工作大部分都是GPU直接渲染到屏幕上显示的，但是也有一部分工作是由CPU完成的，这部分渲染工作就叫做CPU渲染，也叫做软件渲染。</p>
-<p>涉及CPU的操作包括：</p>
-<ul>
-<li>覆写（override）drawRect: 方法，即使drawRect:里面什么都不做</li>
-<li>任何形式的文本操作，包括UILabel、CATextLayers、CoreText等等</li>
-<li>使用CGContext（也就是Core Graphics框架）的任何操作，无论是Onscreen还是Offscreen</li>
-<li>压缩图片的显示，比如PNG、JPEG格式的图片</li>
-<li>……（以后发现了再补充，有几个我也不是很确定）</li>
-</ul>
-<p>因为这些操作不是由GPU直接渲染到屏幕上，而是在屏幕外缓存中由CPU做了一部分工作，之后再由GPU渲染到屏幕上，所以一部分人也称这些操作会导致“离屏渲染”。比如，在drawRect:内进行的绘制会被CPU渲染成位图bitmap，然后渲染成的位图再交给GPU处理。</p>
-<p>但是，打开Color Offscreen-Rendered Yellow开关，经过对上述所列操作的测试，发现所列的四种操作没有一种会导致黄色区域。但是这并不意味着这四种操作不是离屏渲染，这四种操作确实包含CPU的渲染，并且是在屏幕外缓冲区中进行的操作。只是这四种操作不是UIKit认为的离屏渲染而已。</p>
-<p>UIKit认为的离屏渲染，也就是Color Offscreen-Rendered Yellow选项认为的离屏渲染，仅仅指操作CALayer的属性导致的额外渲染。这些额外渲染工作使得layer不能直接被渲染到屏幕上，需要额外开辟缓冲区进行这些工作。这才是会导致黄色区域的离屏渲染。</p>
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>其实离屏渲染指的是渲染到屏幕外缓存中，而不是渲染到屏幕缓存中，无论CPU渲染还是GPU渲染。但是Core Animation认为的离屏渲染又很狭义。到这里，我觉得也没必要非得区分这些名词了。我们仅仅需要知道什么情况下会导致黄色区域，什么情况下会涉及CPU的工作，以及各个情况的性能影响就可以了。至于离屏渲染到底包不包含所谓的CPU渲染，我觉得也没必要在意了。说包含也可以，因为毕竟不是直接渲染到屏幕上；说不包含也可以，因为Core Animation的测试工具没有将其算上。</p>
-<p>说实话，感觉这篇文章写的不好，很多地方没说清楚，有很多地方没有底气，更有很多地方会出错。待以后学的越来越深后再来改吧~</p>
+          渲染分类OpenGL的概念中，GPU渲染的目的地有两种：
 
-          
+On-Screen Rendering (当前屏幕渲染)指的是GPU的渲染操作是在当前用于显示的屏幕缓冲区进行。
+
+Off-Screen Rendering (离屏渲染)指的是在GPU在当前屏幕缓冲区以外开辟一个缓冲区进行渲染操作。
+
+
+区
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/06/19/iOS中的离屏渲染/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1038,39 +788,15 @@
       
         
           
-            <h1 id="alpha"><a href="#alpha" class="headerlink" title="alpha"></a>alpha</h1><p>alpha是一个CGFloat类型的值，取值从0.0到1.0，代表从完全透明到完全不透明。其默认值是1.0。alpha的值不为1.0，就代表这个视图是（半）透明的。透明的含义是：能看到该视图下层视图的内容，但是不能保证看到下下层视图的内容。能不能看到下下层视图的内容，取决于下层视图的alpha。最后具体的显示效果，是由上到下，所有视图的颜色进行叠加的效果。</p>
-<p>需要注意的是，当给一个View的alpha赋值时，改变的是其视图所有内容的透明度，即包括其子视图的透明度，但是其子视图的alpha属性的值不会随着父视图alpha的赋值而改变。</p>
-<p>为了便于理解，举例来说明。</p>
-<h2 id="例子一"><a href="#例子一" class="headerlink" title="例子一"></a>例子一</h2><p>视图层级如下所示，红色的UIView覆盖在UIImageView上，红色的UIView中还有一个蓝色的UIView子视图。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">UIView</div><div class="line">　　-&gt;UIImageView </div><div class="line">　　-&gt;UIView 　　　　alpha = 0.5 color = red</div><div class="line">　　　　-&gt;UIView 　　alpha = 1.0 color = blue</div></pre></td></tr></table></figure>
-<p>父视图设置背景色的是红色，赋值alpha为0.5；子视图设置背景色是蓝色，alpha默认。在viewDidAppear中打印两个UIView的alpha，父视图的alpha是0.5，子视图的alpha是1.0。<br>实际上看到的效果，如下图所示。</p>
-<p><img src="/images/alpha、opaque、backgroundColor辨析/blue.png" alt=""></p>
-<p>可以看到，子视图未覆盖到的父视图区域半透明的红色覆盖图片，这很容易理解，因为父视图的alpha是0.5。在子UIView覆盖到的区域，是半透明的蓝色覆盖着图片。明明子UIView的alpha是1.0，为什么会透明呢？而且，就算透明为什么不是蓝色加红色生成紫色呢？中间的红色去哪了？</p>
-<p>首先不考虑父UIView的alpha，暂且认为其alpha是1.0。那么情况就是，一个蓝色的不透明视图，作为子视图被添进了一个红色的视图。这就导致父UIView的一部分被蓝色的子UIView给完全覆盖掉了，看不到红色了。我们看到的是一个红色不透明视图，其内部是不透明的蓝色视图。</p>
-<p>然后由于父UIView的alpha是0.5，那么其所有的内容都是透明的。也就是上面的红色嵌蓝色的不透明视图，要都变为透明的。这就产生了最后的效果，也就是透明的红色嵌入透明的蓝色。</p>
-<h2 id="例子二"><a href="#例子二" class="headerlink" title="例子二"></a>例子二</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">UIView</div><div class="line">　　-&gt;UIImageView </div><div class="line">　　-&gt;UIView　　　　alpha = 0.5 　color = red</div><div class="line">　　　　-&gt;UIView　　alpha = 0.5 　color = blue</div></pre></td></tr></table></figure>
-<p>父UIView设置背景色的是红色，赋值alpha为0.5；子UIView设置背景色是蓝色，alpha为0.5。那么分析一下：首先是半透明的蓝色视图覆盖在红色视图上，看到的是紫色的视图。然后由于父UIView的alpha是0.5，那么看到半透明的紫色视图嵌在半透明的红色视图里面。实际的效果如下图所示，与我们的分析相符合。</p>
-<p><img src="/images/alpha、opaque、backgroundColor辨析/purple.png" alt=""></p>
-<h1 id="backgroundColor的alpha"><a href="#backgroundColor的alpha" class="headerlink" title="backgroundColor的alpha"></a>backgroundColor的alpha</h1><p>backgroundColor属性设置的是视图的背景色，为UIColor对象，UIColor可以设置成带有alpha的颜色。需要注意的有两点。<br>如果设置backgroundColor的alpha，那么只影响当前UIView的背景，并不影响其所有子视图的透明度。这就是同UIView的alpha的区别。<br>UIView的alpha会和backgroundColor的alpha共同作用，产生最终的视觉效果。例如，backgroundColor的alpha为0.5，UIView的alpha为0.5，那么最后的视觉效果是0.25的alpha。</p>
-<h1 id="opaque"><a href="#opaque" class="headerlink" title="opaque"></a>opaque</h1><p>此属性是BOOL值。官方文档的介绍是这样的。</p>
-<blockquote>
-<p>A Boolean value that determines whether the view is opaque.<br>This property provides a hint to the drawing system as to how it should treat the view. If set to YES, the drawing system treats the view as fully opaque, which allows the drawing system to optimize some drawing operations and improve performance. If set to NO, the drawing system composites the view normally with other content. The default value of this property is YES.<br>An opaque view is expected to fill its bounds with entirely opaque content—that is, the content should have an alpha value of 1.0. If the view is opaque and either does not fill its bounds or contains wholly or partially transparent content, the results are unpredictable. You should always set the value of this property to NO if the view is fully or partially transparent.<br>You only need to set a value for the opaque property in subclasses of UIView that draw their own content using the drawRect: method. The opaque property has no effect in system-provided classes such as UIButton, UILabel, UITableViewCell, and so on.</p>
-</blockquote>
-<ul>
-<li>当该属性是NO的时候，绘制系统会综合该视图和下层视图的内容，产生最终的显示结果。</li>
-<li>当该属性是YES的时候，表示用户清楚该视图完全不透明，绘制系统会直接显示该视图的内容，不会把其内容和下层视图的内容综合，这就避免了额外的计算开销。不过此时其视图的内容必须alpha等于1.0，否则结果不可预测。该属性默认是YES。</li>
-</ul>
-<p>该属性本质上是一个性能开关，在用户确定视图是不透明的时候，才能把该属性赋值为YES，这样会节省大量计算资源。</p>
-<p>但是经过实际的实验，发现如果UIView的alpha是0.5，opaque是YES，还是会产生透明的效果。这表示虽然设置了opaque是YES，绘制系统还是把UIView和覆盖的视图内容结合起来了。我认为，iOS是有一个判断的，当alpha是不为1.0的时候，无论opaque的值是YES还是NO，绘制系统都会把UIView和覆盖的UIView进行混合。</p>
-<p>UIView的layer也有opaque属性。和UIView的opaque属性不同，改变layer的这个属性是有直接效果的。layer的该属性控制着传给drawRect:方法的CGContext对象的alpha通道。当layer的opaque属性是YES的时候，CGContext是没有alpha通道的，意味着每一个像素的alpha都是1.0，是不透明的。</p>
-<p>改变UIView的opaque不会影响layer的opaque。与此对应的是，改变UIView的alpha会影响layer的opacity。因为alpha就是对opacity的一个封装。</p>
-<h1 id="hidden"><a href="#hidden" class="headerlink" title="hidden"></a>hidden</h1><p>此属性为BOOL值，用来表示UIView是否隐藏。关于隐藏大家都知道就是让UIView不显示而已，但是需要注意的是：</p>
-<ul>
-<li>当前UIView的所有subview也会被隐藏，但不改变subview的hidden属性。</li>
-<li>当前UIView也会从响应链中移除。</li>
-</ul>
-
-          
+          alphaalpha是一个CGFloat类型的值，取值从0.0到1.0，代表从完全透明到完全不透明。其默认值是1.0。alpha的值不为1.0，就代表这个视图是（半）透明的。透明的含义是：能看到该视图下层视图的内容，但是不能保证看到下下层视图的内容。能不能看到下下层视图的内容，取决于下层视图的alp
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/06/15/alpha、opaque、backgroundColor辨析/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1199,19 +925,16 @@
       
         
           
-            <p>当你给一个对象发送消息时,<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">id p = [object message];</div></pre></td></tr></table></figure></p>
-<p>runtime机制会通过object的isa指针来寻找object对应的class里面的message方法的实现。在发送消息之前，会先进行调用respondsToSelector:来检查object能不能响应该消息。在返回值是YES的情况下，才会真正进行消息的分发。</p>
-<p>在 respondsToSelector:或instances​Respond​To​Selector:​ 里面，会首先检查用户是否有动态添加该方法。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[[object class] resolveInstanceMethod:(SEL)name];</div></pre></td></tr></table></figure></p>
-<p>+(BOOL)resolveInstanceMethod:(SEL)name这个方法允许你动态添加method到class里面。然后返回YES的话，会让respondsToSelector返回YES，返回NO的话，respondsToSelector:里面会在对应的class里面寻找对应method的实现，然后把检查结果返回。<br>具体的动态添加方法的代码如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">void dynamicMethodIMP(id self, SEL _cmd)</div><div class="line">&#123;</div><div class="line">    // implementation ....</div><div class="line">&#125;</div><div class="line"></div><div class="line">+ (BOOL) resolveInstanceMethod:(SEL)aSEL</div><div class="line">&#123;</div><div class="line">    if (aSEL == @selector(resolveThisMethodDynamically))</div><div class="line">    &#123;</div><div class="line">          class_addMethod([self class], aSEL, (IMP) dynamicMethodIMP, &quot;v@:&quot;);</div><div class="line">          return YES;</div><div class="line">    &#125;</div><div class="line">    return [super resolveInstanceMethod:aSel];</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>如果respondsToSelector:返回值是NO，那么- (id)forwardingTargetForSelector:(SEL)aSelector会被调用，来询问message消息是否有转发对象。然后让该转发对象执行message方法。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">[object forwardingTargetForSelector:@selecter(message)];</div></pre></td></tr></table></figure></p>
-<p>这个方法返回一个转发对象，如果这个转发对象能够响应@selector(message)，那么这个对象就会执行message这个方法。对用户来讲就好像是原本的message方法被调用一样，最终也是p得到返回值。这个就是runtime的消息转发机制。</p>
-<p>如果上面的方法返回nil，那么消息</p>
-<ul>
-<li>(NSMethodSignature <em>)methodSignatureForSelector:(SEL)aSelector 会被发送，用以得到一个method signature从而来构造一个invocation。如果得到了method signature，那么会把构造的invocation作为参数，- (void)forwardInvocation:(NSInvocation </em>)anInvocation 消息会被发送。在这个方法里面你可以解析invocation，然后调用任何方法，进行自己想要做的任何事情，还可以设置invocation的返回值。这个返回值会作为最初发送的消息返回值进行返回。这个也是runtime的消息转发机制的一部分。</li>
-</ul>
-<p>最后如果没有得到任何method signature，然后runtime机制会发送- (void)doesNotRecognizeSelector:(SEL)aSelector 消息给object，这个方法在NSObject里面实现，用来制造出一个异常exception。</p>
-
-          
+          当你给一个对象发送消息时,1id p = [object message];
+runtime机制会通过object的isa指针来寻找object对应的class里面的message方法的实现。在发送消息之前，会先进行调用respondsToSelector:来检查object能不能响应该消息。在返回
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/03/24/OC-Runime-一/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1362,11 +1085,15 @@
       
         
           
-            <p>链式编程最直观的就是Masonry,常见又好用，大大增加代码可读性。<br>下面是一个链式编程的例子。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">#import &quot;ViewController.h&quot;</div><div class="line"></div><div class="line">@interface ViewController ()</div><div class="line">@property (nonatomic) ViewController* (^print)(NSInteger);</div><div class="line">@end</div><div class="line"></div><div class="line">@implementation ViewController</div><div class="line"></div><div class="line">- (void)viewDidLoad &#123;</div><div class="line">    [super viewDidLoad];</div><div class="line">    // Do any additional setup after loading the view, typically from a nib.</div><div class="line">    self.print(1)</div><div class="line">        .print(2)</div><div class="line">        .print(3);</div><div class="line">&#125;</div><div class="line"></div><div class="line">- ( ViewController*(^)(NSInteger) )print&#123;</div><div class="line">    return ^(NSInteger num)&#123;</div><div class="line">        NSLog(@&quot;wanston log: %ld&quot;, (long)num);</div><div class="line">        return self;</div><div class="line">    &#125;;</div><div class="line">&#125;</div><div class="line"></div><div class="line">@end</div></pre></td></tr></table></figure></p>
-<p>执行完上面代码之后，打印出：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">2017-02-28 16:54:29.095 chainProgramming[4078:116402] wanston log: 1</div><div class="line">2017-02-28 16:54:29.096 chainProgramming[4078:116402] wanston log: 2</div><div class="line">2017-02-28 16:54:29.097 chainProgramming[4078:116402] wanston log: 3</div></pre></td></tr></table></figure></p>
-<p>上面的代码中，ViewController类有一个print属性，还有一个print方法。print方法就是print属性的getter方法。所以，self.print 等同于[self print]，返回的是一个block。self.print(1)，等同于block(1)，即调用了这个block。调用完block之后，返回值是self，所以又可以在后面添加.print()来继续调用，从而实现了链式编程。实际上print的property声明可以不要。可以直接通过点来调用方法。</p>
-
-          
+          链式编程最直观的就是Masonry,常见又好用，大大增加代码可读性。下面是一个链式编程的例子。123456789101112131415161718192021222324#import &quot;ViewController.h&quot;@interface ViewController ()
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/02/28/iOS链式编程/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1517,34 +1244,15 @@
       
         
           
-            <h1 id="drawRect-中的官方注释"><a href="#drawRect-中的官方注释" class="headerlink" title="drawRect:中的官方注释"></a>drawRect:中的官方注释</h1><p>新建一个UIView的子类，Xcode会自动生成下面的代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">/*</div><div class="line">// Only override drawRect: if you perform custom drawing.</div><div class="line">// An empty implementation adversely affects performance during animation.</div><div class="line">- (void)drawRect:(CGRect)rect</div><div class="line">&#123;</div><div class="line">    // Drawing code</div><div class="line">&#125;</div><div class="line">*/</div></pre></td></tr></table></figure></p>
-<p>下面解释为什么会有这样一段注释。</p>
-<h1 id="UIView的显示"><a href="#UIView的显示" class="headerlink" title="UIView的显示"></a>UIView的显示</h1><p>查看UIView.h，发现UIView有如下的一个@property<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">@property(nonatomic,readonly,strong)                 CALayer  *layer;              // returns view&apos;s layer. Will always return a non-nil value. view is layer&apos;s delegate</div></pre></td></tr></table></figure></p>
-<p>UIView的显示实际上由CALayer所负责，显示什么内容由CALayer的属性contents决定，这个contents就是CALayer的backing store。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">/* An object providing the contents of the layer, typically a CGImageRef,</div><div class="line"> * but may be something else. (For example, NSImage objects are</div><div class="line"> * supported on Mac OS X 10.6 and later.) Default value is nil.</div><div class="line"> * Animatable. */</div><div class="line"></div><div class="line">@property(nullable, strong) id contents;</div></pre></td></tr></table></figure></p>
-<p>UIView根据-drawRect是否存在，来决定绘制的一系列细节，即使-drawRect:里面什么都不做。我通过实验验证，得到如下结果：</p>
-<p>如果-drawRect: 存在：</p>
-<ul>
-<li>view.layer不为nil；</li>
-<li>view.layer.contents不为nil；</li>
-<li>-drawLayer:inContext:会被调用，继而在里面调用 -drawRect:。</li>
-</ul>
-<p>如果-drawRect: 不存在：</p>
-<ul>
-<li>view.layer不为nil；</li>
-<li>view.layer.contents为nil；</li>
-<li>-drawLayer:inContext:不会被调用。</li>
-</ul>
-<p>需要注意的是，view.layer.contents是否为nil，仅仅与本视图是否实现了-drawRect:有关，与view的子视图是否实现-drawRect:无关。</p>
-<p>每一个UIView都是它的CALayer的delegate，UIView实现了 @protocol CALayerDelegate <nsobject> 的 -drawLayer:inContext: 方法，在该方法里面UIView会做一些事情然后调用 -drawRect:。</nsobject></p>
-<p>所以我们的自定义绘制任务可以在UIView子类的 -drawRect: 方法里面实现。也可以在UIView子类里面重写 -drawLayer:inContext: 方法，在该方法里面实现自定义绘制任务，这样的话 -drawRect: 方法就不会被调用了。</p>
-<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>回过头来看，An empty implementation adversely affects performance during animation的原因是空的-drawRect:也会导致layer使用内存作为backing store，从而影响整个图层绘制的性能。</p>
-<p>相关链接：</p>
-<ol>
-<li><a href="http://stackoverflow.com/questions/4979192/ios-using-uiviews-drawrect-vs-its-layers-delagate-drawlayerincontext" target="_blank" rel="external">iOS: Using UIView’s ‘drawRect:’ vs. its layer’s delagate ‘drawLayer:inContext:’</a></li>
-<li><a href="http://stackoverflow.com/questions/18748276/why-an-empty-implementation-of-drawrect-will-adversely-affect-performance-durin" target="_blank" rel="external">Why an empty implementation of drawRect: will adversely affect performance during animation</a></li>
-</ol>
-
-          
+          drawRect:中的官方注释新建一个UIView的子类，Xcode会自动生成下面的代码：12345678/*// Only override drawRect: if you perform custom drawing.// An empty implementation adversely a
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/02/19/iOS绘图之drawRect/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1695,38 +1403,15 @@
       
         
           
-            <h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>搭建个人博客首先需要一个服务器，然后在该服务器上安装服务器软件，搭建你的个人博客网站，这样别人才可以访问到你的个人博客。我们使用GitHub作为服务器，然后在本地安装hexo，hexo是一个开源的静态博客生成器，我们利用hexo生成自己的博客网站，把生成的网站文件push到自己的GitHub仓库中去，这样就可以通过GitHub Pages功能访问到自己的仓库，也就是访问到自己的个人博客。<br>下面就介绍如何一步步的搭建。</p>
-<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>macOS Sierra 10.12</p>
-<h1 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h1><h2 id="GitHub"><a href="#GitHub" class="headerlink" title="GitHub"></a>GitHub</h2><p>注册GitHub账号，新建repository，命名为<em>你的GitHub用户名.github.io</em>，我的就是<em>wanston.github.io</em>。<br>进入该repository的setting，确保GitHub Pages已经启用。启用之后会这样显示：</p>
-<p><img src="/images/GitHub-Hexo搭建博客/1.png" alt=""></p>
-<p>如果没能开启GitHub Pages的话，检查一下你的repository里面是不是空的，如果是空的，就添加一个文件使其非空就可以了。我一开始就是没能开启，然后添加了README.md文件就可以了。</p>
-<h2 id="安装node-js"><a href="#安装node-js" class="headerlink" title="安装node.js"></a>安装node.js</h2><p>因为hexo是使用node.js开发的，所以首先安装<a href="https://nodejs.org/en/" target="_blank" rel="external">node.js</a>。</p>
-<h2 id="安装hexo"><a href="#安装hexo" class="headerlink" title="安装hexo"></a>安装hexo</h2><p><a href="https://hexo.io/zh-cn/" target="_blank" rel="external">hexo官网点这里</a>。<br>打开terminal，新建一个文件夹，用于安装hexo，然后进入该文件夹，写入下列命令行。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ mkdir Blog</div><div class="line">$ cd Blog</div><div class="line">$ sudo npm install -g hexo</div><div class="line">$ hexo init</div><div class="line">$ npm install hexo-deployer-openshift --save // 安装deploy插件，用于推送到git仓库</div><div class="line">$ hexo generate // 生成博客</div><div class="line">$ hexo server // 打开本地服务器</div></pre></td></tr></table></figure>
-<p>此时打开<em><a href="http://localhost:4000" target="_blank" rel="external">http://localhost:4000</a></em>，就会看到已经生成的博客是什么样子。</p>
-<h2 id="配置hexo"><a href="#配置hexo" class="headerlink" title="配置hexo"></a>配置hexo</h2><p>在安装hexo的文件夹（我的是Blog/）下，打开站点配置文件_config.yml，在文件末尾添加你的GitHub仓库的地址，如下图所示。这样本地的文章才能deploy到GitHub仓库。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">deploy:</div><div class="line">  type: git</div><div class="line">  repo: https://github.com/wanston/wanston.github.io.git</div><div class="line">  branch: master</div></pre></td></tr></table></figure>
-<p>此时执行</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ hexo generate</div><div class="line">$ hexo deploy</div></pre></td></tr></table></figure>
-<p>然后，就可以通过<em><a href="http://wanston.github.io" target="_blank" rel="external">http://wanston.github.io</a></em>访问你的博客站了。</p>
-<p>在文件_config.yml里面，同样可以配置博客站点的各种信息，包括标题、作者、语言、头像等等。<br>需要注意的是，在该文件里面如果要索引一个本地文件，根目录/代表的是，hexo文件夹/source/，我的就是Blog/source/。</p>
-<h2 id="第一篇博客"><a href="#第一篇博客" class="headerlink" title="第一篇博客"></a>第一篇博客</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ hexo new &quot;我的第一篇文章&quot; #新建文章</div></pre></td></tr></table></figure>
-<p>新建的文章的本地路径是 <em>Blog/source/_posts/我的第一篇文章.md</em>，编辑该文件，就可以用markdown语法写博客了。写完之后就generate和deploy就可以了。</p>
-<h2 id="更换主题"><a href="#更换主题" class="headerlink" title="更换主题"></a>更换主题</h2><p>我的博客的主题是NexT，GitHub上搜hexo-theme-next就能找到。<br>使用该主题的具体方法见该主题的<a href="http://theme-next.iissnan.com" target="_blank" rel="external">官网</a>。</p>
-<h2 id="添加categories和tags页面"><a href="#添加categories和tags页面" class="headerlink" title="添加categories和tags页面"></a>添加categories和tags页面</h2><p>写文章的时，在文章开始加入categories和tags字段，为文章分类和添加标签。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">---</div><div class="line">title: GitHub+Hexo搭建博客</div><div class="line">date: 2017-02-18 11:02:54</div><div class="line">categories: 杂七杂八</div><div class="line">tags: Hexo</div><div class="line">---</div></pre></td></tr></table></figure>
-<p>deploy之后，点进categories和tags页面会发现啥都没有，因为此时博客站上并没有这两个页面，解决办法：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ hexo new page tags</div><div class="line">$ hexo new page categories</div><div class="line">$ vim hexo_path/source/tags/index.md</div></pre></td></tr></table></figure>
-<p>在md文档头部添加： type: tags</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ vim hexo_path/source/categories/index.md</div></pre></td></tr></table></figure>
-<p>在md文档头部添加： type: categories。<br>然后generate和deploy，博客上的这两个页面就会正确出现了。</p>
-<h2 id="开通评论"><a href="#开通评论" class="headerlink" title="开通评论"></a>开通评论</h2><p>开通评论的方法具体见Next主题的<a href="http://theme-next.iissnan.com" target="_blank" rel="external">官网</a>。<br>开通主题后，我发现我的categories和tags页面也有评论功能，看起来很丑，也不需要，就想关闭这两个页面的评论功能。下面是具体方法：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ vim hexo_path/source/tags/index.md</div></pre></td></tr></table></figure>
-<p>在md文档头部添加： comment: false</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ vim hexo_path/source/categories/index.md</div></pre></td></tr></table></figure>
-<p>在md文档头部添加： comment: false</p>
-
-          
+          原理搭建个人博客首先需要一个服务器，然后在该服务器上安装服务器软件，搭建你的个人博客网站，这样别人才可以访问到你的个人博客。我们使用GitHub作为服务器，然后在本地安装hexo，hexo是一个开源的静态博客生成器，我们利用hexo生成自己的博客网站，把生成的网站文件push到自己的GitHub仓库
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/02/18/GitHub-Hexo搭建博客/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1877,9 +1562,16 @@
       
         
           
-            <p>你好，这是我的第一篇博客。</p>
+          你好，这是我的第一篇博客。
 
           
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2017/02/17/第一篇博客/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -2027,7 +1719,7 @@
 <div class="theme-info">
   主题 -
   <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Pisces
+    NexT.Mist
   </a>
 </div>
 
@@ -2094,13 +1786,6 @@
 
   
   
-
-
-  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
-
-  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
-
-
 
   
 
